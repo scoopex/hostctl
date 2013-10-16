@@ -1,0 +1,723 @@
+#!/usr/bin/env perl
+
+###############################################################################l
+###
+### Hostctl
+###
+### Marc Schoechlin <marc.schoechlin@dmc.de>
+### Marc Schoechlin <ms@256bit.org>
+###
+### 
+###   This program is free software: you can redistribute it and/or modify
+###   it under the terms of the GNU General Public License as published by
+###   the Free Software Foundation, either version 3 of the License, or
+###   (at your option) any later version.
+###
+###   This program is distributed in the hope that it will be useful,
+###   but WITHOUT ANY WARRANTY; without even the implied warranty of
+###   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+###   GNU General Public License for more details.
+###
+###   You should have received a copy of the GNU General Public License
+###   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###
+###   Dieses Programm ist Freie Software: Sie können es unter den Bedingungen
+###   der GNU General Public License, wie von der Free Software Foundation,
+###   Version 3 der Lizenz oder (nach Ihrer Option) jeder späteren
+###   veröffentlichten Version, weiterverbreiten und/oder modifizieren.
+###
+###   Dieses Programm wird in der Hoffnung, dass es nützlich sein wird, aber
+###   OHNE JEDE GEWÄHRLEISTUNG, bereitgestellt; sogar ohne die implizite
+###   Gewährleistung der MARKTFÄHIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK.
+###   Siehe die GNU General Public License für weitere Details.
+###
+###   Sie sollten eine Kopie der GNU General Public License zusammen mit diesem
+###   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
+###
+
+use warnings;
+use strict;
+
+# No output buffering
+$|=1;
+
+use FindBin qw($RealBin);
+use Sys::Hostname;
+use Getopt::Long;
+use Term::ANSIColor;
+use File::Temp qw(tempfile);
+
+
+my $color_marker = "green";
+my $color_marker_warn = "yellow";
+my $color_marker_bad = "red";
+my $color_marker_info = "magenta";
+
+my $localhost = hostname;
+my $recipedirs = [ "$RealBin/recipe/", $ENV{"HOME"}."/.hostctl/recipe/" ];
+my @cfgfiles = ( $ENV{"HOME"}."/.hostctl/hostctl.conf", $RealBin."/hostctl.conf" );
+
+my %groups = ();
+my @execute_on = ();
+my ($tmp, $host) = '';
+
+my $debug = undef;
+my $prompt = undef;
+my $array = undef;
+my $help = undef;
+my $show = undef;
+my $term = undef;
+my $login = undef;
+my $quiet = undef;
+my $nodes = undef;
+my $batchmode = undef;
+my @wait = ();
+my @command = ();
+my @executelocal = ();
+my @recipe = ();
+my @inscreen = ();
+my @optssh = ();
+my $makeselection = undef;
+my ($tmpfh, $tmpfilename);
+
+
+#################################################################################
+###
+### READ THE CONFIGURATION
+
+my $cfgfile;
+
+if (defined $ENV{HOSTCTL_CONFIG}){
+        if (-f $ENV{HOSTCTL_CONFIG}){
+         $cfgfile = $ENV{HOSTCTL_CONFIG};
+                   print STDERR "INFO: Using config file '".$cfgfile."'\n";
+         read_config($cfgfile,0);
+        }else{
+	        print STDERR "ERROR: File ".$ENV{HOSTCTL_CONFIG}." does not exist";
+	}
+}else{
+   foreach $cfgfile(@cfgfiles){
+      if ( -f $cfgfile ){
+	      read_config($cfgfile,0);
+         last;
+      }
+   }
+}
+
+if (defined $ENV{HOSTCTL_CONFIG_DYNAMIC_SCRIPT}){
+	print STDERR "Loading dynamic config using '".$ENV{HOSTCTL_CONFIG_DYNAMIC_SCRIPT}."'\n";
+	read_config($ENV{HOSTCTL_CONFIG_DYNAMIC_SCRIPT},1);
+}
+
+
+#################################################################################
+###
+### HELPERS
+
+sub usage(){
+  print "Usage: $0 <options> <groupname>..<groupname> \n\n";
+  print "Get detailed usage information by calling 'hostctl -h'\n\n";
+  print "===> Available recipes:\n";
+  foreach my $recipedir(@{$recipedirs}){
+  print "\nDirectory: $recipedir\n\n";
+  printf(" %-20s %s\n","Recipename","File");
+  if ( -d $recipedir ){
+     opendir(IMD, "$recipedir") || die("Cannot open directory : $recipedir");
+        foreach my $recipe(sort(readdir(IMD))){
+          if ($recipe =~m /^\./){
+         next;
+          }
+          $recipe =~s ,^/,,; $recipedir =~s ,/$,,;
+          printf(" %-20s %s\n",$recipe,"$recipedir/$recipe");
+        }
+     }else{
+         printf(" %-20s %s\n","<NONE>", "<NONE>");
+     }
+  }
+  print "\n";
+  print "Groups: " . join(", ",sort(keys(%groups))) ."\n";
+  exit(1);
+}
+
+
+sub out($$){
+   my ($text,$type) = @_;
+
+   if (defined $quiet){
+	return;
+   }
+   if (-t STDOUT) {
+     if ($type eq "ok"){
+        print colored ($text, $color_marker);
+     }elsif ($type eq "warn"){
+        print colored ($text, $color_marker_warn);
+     }elsif ($type eq "info"){
+        print colored ($text, $color_marker_info);
+     }else{
+        print colored ($text, $color_marker_bad);
+     }
+   } else {
+     print "$text";
+   }
+}
+
+###########################################################
+
+sub read_config {
+  my $dname = shift;
+  my $dynamic = shift;
+  my $localhost = hostname;
+
+  if ($dynamic == 1){
+     open(FIL,"$dname|");
+  }else{
+     if (!-f $dname){
+       print "ERROR: configuration file '$dname' does not exist\n";
+       exit(1);
+     }
+     open(FIL,"<$dname");
+  }
+
+  while(my $line = <FIL>) {
+    chomp($line);
+    my ($hostregex, $grp, $hosts);
+
+    if ($line =~m /^\s*#/){
+      next;
+    }
+    if ($line =~m /^\s*(.+?)\s*:\s*(.+?)\s*:\s*(.+?)\s*$/) {
+      ($hostregex, $grp, $hosts) = ($1,$2,$3);
+    }
+    elsif ($line =~m /^\s*(.+?)\s*:\s*(.+?)\s*$/) {
+      ($hostregex, $grp, $hosts) = (".*",$1,$2);
+    }else{
+      next;
+    }
+
+    if (!($localhost =~m /$hostregex/)){
+	next;
+    }
+    $grp =~s /\s*//;
+    my @host = split(/,/, $hosts);
+    my @neu = ();
+    foreach my $tmp (@host) {
+      $tmp =~ s/^\s+//g;
+      $tmp =~ s/\s+$//g;
+      push(@neu, $tmp);
+    }
+    $groups{$grp} = \@neu;
+  }
+  close(FIL);
+
+  return 0;
+}
+
+sub show_groups($;$){
+   my ($given_items,$array) = @_;
+   my @selgroups;
+   if (@{$given_items} > 0){
+     @selgroups = @{$given_items};
+   }else{
+     @selgroups = sort(keys(%groups));
+     push(@selgroups, "all");
+   }
+
+   foreach my $grp(@selgroups){
+     if(defined $array){
+         print join(" ",get_group_members($grp))
+     }else{
+        print "Group: $grp\n";
+        print "Hosts: ".join(", ",get_group_members($grp))."\n";
+        print "\n";
+     }
+   }
+
+   return 0;
+}
+
+sub get_group_members($){
+   my ($given_group) = @_;
+   my @hosts =  ();
+
+   
+#   if ($given_group = ~m /(.*)\@(.*)/){
+#      $given_group=$2;
+#   }
+
+   if ((not exists $groups{$given_group}) and ($given_group ne "all")){
+	   return @hosts;
+   }
+
+   if ($given_group eq "all"){
+	my %tmphosts;
+	foreach my $agroup(keys %groups){
+	  foreach my $host(@{$groups{$agroup}}){
+		$tmphosts{$host} = 1;
+	  }
+	}
+	@hosts = keys %tmphosts;
+   }else{
+  	@hosts = @{$groups{$given_group}};
+   }
+
+   return @hosts;
+}
+
+sub get_recipe($) {
+  my $rname = shift;
+  my $ret = undef;
+
+  if ((-f "$rname") && ($rname=~m,^\/,)){
+     return $rname;
+  }
+
+  foreach my $recipedir(@{$recipedirs}){
+     my $rfile = $recipedir."/".$rname;
+     if (! -f "$rfile"){
+       next;
+     }
+     return $rfile;
+  }
+  out("ERROR: no such recipe '$rname'\n","error");
+  exit 1;
+}
+
+
+#################################################################################
+###
+### MAIN
+
+# Abfragen der Komandozeilenparameter
+my $rgetopt = GetOptions(
+    'array'          => \$array,
+    'batchmode'      => \$batchmode,
+    'command=s'      => \@command,
+    'debug'          => \$debug,
+    'executelocal=s' => \@executelocal,
+    'help'           => \$help,
+    'inscreen=s'     => \@inscreen,
+    'login'          => \$login,
+    'makeselection'  => \$makeselection,
+    'nodes'          => \$nodes,
+    'optssh=s'       => \@optssh,
+    'prompt'         => \$prompt,
+    'recipe=s'       => \@recipe,
+    'show'           => \$show,
+    'quiet'          => \$quiet,
+    'term'           => \$term,
+    'wait=i'         => \@wait,
+);
+
+
+if (defined $help){
+   system("perldoc $0");
+   exit(1);
+}
+my @given_items = ();
+
+# Split groups also by comma for backward compatibility
+foreach my $dgroup(@ARGV){
+   if ($dgroup =~m /,/){
+        foreach my $dugroup(split(",",$dgroup)){
+	    push(@given_items,$dugroup);
+        }
+   }else{
+        push(@given_items,$dgroup);
+   }
+}
+
+# Given arguments are hosts
+if (defined $nodes){
+   @{$groups{"<Specified hostnames>"}} = @given_items;
+   @given_items = ();
+   push(@given_items, "<Specified hostnames>");
+}
+
+if ((defined $help) || ($rgetopt eq "")){
+	usage();
+}
+
+## Show hosts
+if (defined $show){
+   show_groups(\@given_items,$array);
+   exit(0);
+}
+
+if ((!defined $login) && (@command <= 0) && (@recipe <= 0) && (@executelocal <= 0)){
+   out("ERROR: no command or recipe specified\n","error");
+   usage();
+}
+my $cmd = undef;
+if (@command > 0){
+   $cmd = $command[0];
+}
+my %target_hosts;
+
+# Die Gruppen zusammenfassen
+foreach my $group (@given_items) {
+    my @hosts = get_group_members($group);
+
+    foreach my $ihost (@hosts){
+	if (not exists $target_hosts{$ihost}){
+        	$target_hosts{$ihost} = ();
+        }
+      	push(@{$target_hosts{$ihost}}, $group);
+    }
+}
+
+
+my $hosts_total = scalar(keys(%target_hosts));
+my $hosts_iter = 0;
+my @hosts_failed = ();
+my @hosts_success = ();
+
+
+## LOOP OVER HOSTS
+##
+## DO NOT LAUGH ABOUT THE USE OF GOTOS :-)
+## GOTOS MAKE THIS CODE A BIT MORE MANAGEABLE
+## (JUST TRY TO HANDLE MULTIPLE LEVELS OF LOOPS, LASTS, BREAKS, ...)
+##
+foreach my $dhost (sort(keys(%target_hosts))) {
+
+   out("*** HOST: $dhost (Member of ".join(", ",@{$target_hosts{$dhost}})." [".++$hosts_iter."/".$hosts_total."])\n", "ok");
+
+   if (defined $makeselection){
+      while(1){
+         out("\n(e)xecute, (s)kip, (q)uit : ","info");
+         my $pr =  readline(*STDIN);
+         chomp($pr);
+         if ($pr eq "q"){ exit(1); }
+         if ($pr eq "e"){ goto DOIT; }
+         if ($pr eq "s"){ goto NEXT;}
+      }
+   }
+   DOIT:
+
+
+   my $ssh_opts = " ";
+
+   if (@optssh > 0){
+	$ssh_opts .= join(" ",@optssh)." ";
+   }
+
+   if ((defined $term) || (@inscreen > 0)){
+	$ssh_opts.=" -t ";
+   }
+   if (defined $batchmode){
+	$ssh_opts.=" -o BatchMode=yes ";
+   }
+
+   my $go;
+
+   if (@executelocal > 0){
+      $go = join(" ",@executelocal);
+      if ($go =~m /HOST/){
+         $go =~s /HOST/$dhost/g;
+      }else{
+         $go = $go." ".$dhost; 
+      }
+   }
+
+   my $login_cmd = "ssh -t ".$ssh_opts."-o StrictHostKeyChecking=no " . $dhost;
+   # Execute a predefined recipe
+   if (@recipe > 0){
+	   $go = "ssh ".$ssh_opts."-o StrictHostKeyChecking=no " . $dhost . " 'bash -s' < ".get_recipe($recipe[0]);
+      if (defined $inscreen[0]){
+         # Create a temporary file to tweak execution of a recipe in screen
+         ($tmpfh, $tmpfilename) = tempfile("hostctl-tmpfileXXXXX", DIR => "/tmp");
+         print $tmpfh $go."\n";
+         print $tmpfh "read -p 'PRESS ENTER TO EXIT'\n";
+         close($tmpfh);
+         $SIG{INT} = sub { unlink($tmpfilename) };
+         $SIG{TERM} = sub { unlink($tmpfilename) };
+         print $tmpfilename."\n";
+         $go = "bash ".$tmpfilename;
+      }
+   }
+   # Do a login
+   elsif(defined $login){
+     $go = $login_cmd;
+     $wait[0] = 1;
+   # Execute a specified command
+   }elsif(defined $cmd){
+     $go = "ssh ".$ssh_opts."-o StrictHostKeyChecking=no $dhost \'$cmd\'" ;
+   }
+
+   if (defined $debug){ 
+     out("*" x 80 .  "\n", "ok");
+     print $go."\n";
+     out("*" x 80 .  "\n", "ok");
+   }
+
+   if (defined $inscreen[0]){
+     	out("RUNNING in screen session '".$inscreen[0]."'\n", "warn");
+      if ($hosts_iter == 1){
+  		   $go = "screen -t ".$dhost." -S ".$inscreen[0]." -d -m $go"
+      }else{
+		   $go = "screen -x ".$inscreen[0]." -m -X screen -t ".$dhost." $go"
+      }
+      print $go."\n" if (!defined $quiet);
+   }
+
+ 
+   # A jump label to ease execution logic 
+   EXECUTE: 
+
+   my $exitcode = system($go);
+   my $exittext = "0";
+
+   # Create informational message about exit-message
+   if ($exitcode == -1) {
+       $exittext = "failed to execute: $go\n";
+   }
+   elsif ($exitcode & 127) {
+       $exittext = sprintf("child died with signal %d, %s coredump\n",
+           ($exitcode & 127),  ($exitcode & 128) ? 'with' : 'without');
+   }
+   else {
+       $exittext = sprintf("child exited with value %d\n", $exitcode >> 8);
+   }
+
+   if ($exitcode != 0) {
+     out("EXIT : $exittext\n", "bad");
+     push(@hosts_failed, $dhost);
+   }else{
+     out("EXIT : $exittext\n", "ok");
+     push(@hosts_success, $dhost);
+   }
+
+   if ((defined $inscreen[0]) && ($hosts_iter == 1) && (!defined $prompt)){
+        # Just wait for 2.5 second to startup screen
+        sleep(2.5);
+        system('screen -x '.$inscreen[0].' -m -X defscrollback 10000');
+        system('screen -x '.$inscreen[0].' -m -X caption always "%3n %t%? @%u%?%? [%h]%?"');
+        system('screen -x '.$inscreen[0].' -m -X caption string "%{.ck} %n %t %{.gk}"');
+        system('screen -x '.$inscreen[0].' -m -X hardstatus alwayslastline');
+        system('screen -x '.$inscreen[0].' -m -X hardstatus string "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"');
+   }
+
+   if (defined $wait[0]){
+	print "INFO: WAITING for ".$wait[0]." second(s) (hit STRG+c to stop host iteration)\n";
+        sleep($wait[0]);
+   }
+
+   if(defined $prompt){
+	my $ask_loop = 1;
+	while($ask_loop != 0){	
+		out("(c)ontinue, (r)etry, (s)hell, (q)uit : ","info");
+		my $pr =  readline(*STDIN);
+		chomp($pr);
+		if ($pr eq "q"){ exit(1); }
+		if ($pr eq "c"){ $ask_loop = 0; }
+		if ($pr eq "r"){ goto EXECUTE; }
+		if ($pr eq "s"){ system($login_cmd) ;}
+	}
+   }
+   NEXT:
+}
+## LOOP FINISHED
+if (!defined $quiet){
+ print "*** FINISHED\n";
+ print "*" x 80 ."\n";
+}
+
+if (defined $inscreen[0]){
+   out("NOTE: command were execute in a screen session, attach by executing 'screen -x ".$inscreen[0]."'\n", "warn");
+   out("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)\n", "warn");
+}
+
+if ((defined $tmpfilename) && (-f $tmpfilename)){
+   unlink($tmpfilename);
+}
+
+out("SUCESSFUL HOSTS (".scalar(@hosts_success)." of ".scalar(keys %target_hosts).") : ".join(", ",@hosts_success)."\n","ok");
+if (@hosts_failed > 0){
+   out("FAILED HOSTS (".scalar(@hosts_failed)." of ".scalar(keys %target_hosts).")     : ".join(", ",@hosts_failed)."\n","bad");
+   exit(1);
+}
+
+exit(0);
+
+__END__
+
+=head1 NAME
+
+hostctl - convenient management and execution of comand on groups of hosts
+
+=head1 SYNOPSIS
+
+hostctl [OPTIONS] [GROUPNAMES]
+
+To specify more than one <groupname>, specify groups separated by spaces or comma.
+Options and groupnames can be mixed. Options can be abbreviated if there are no ambiguities.
+
+=head1 OPTIONS
+
+=over
+
+=item --command <command>
+
+Command to execute. A ssh login is performed on the specified hosts and the specified
+command is executed on the remotehost.
+
+=item --executelocal <command>
+
+Execute a local command and add hostname to the command
+(Hostname will be appended to the command, or inserted where 'HOST' string
+is located in the string. 
+
+=item --recipe <name>|<path>
+
+Recipe to execute. A recipe is a shellscript which defines recurring administration tasks.
+Recipes can be stored in $HOME/.hostctl/recipe/ or <hostctl-installation-path>/recipe/ and can
+be called by their basename.
+Alternatively, recipes can be called be their fully qualified path.
+
+=item --nodes
+
+Specify hosts instead of groups. 
+
+=item --debug
+
+debug mode
+
+=item --quiet 
+
+reduce output, useful for aggregating output of multiple hosts
+
+=item --help
+
+show this manpage
+
+=item --show
+
+show group(s)
+
+=item --show --array
+
+list hosts suitable for array iteration
+
+=item --login
+
+login to each host
+(sleep 1 second after every login, use STRG+c to terminate iteration)
+
+=item --optssh <arguments>
+
+Add the arguments to the ssh command.
+
+=item --batchmode
+
+batchmode, no password prompting (skip host if not ssh-key auth is possible)
+
+=item --prompt
+
+ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit
+
+=item --makeselection
+
+raise a prompt before each host which provides the possibility to
+confirm, skip or quit execution
+
+=item --inscreen <session>
+
+start command/script screen session
+(screen -x <session>, see 'man screen' or 'STRG+a :help')
+
+=item --term
+
+Force pseudo-tty allocation
+(typically needed for tools which use (ncurses-)text-menus)
+
+=item --wait <seconds>
+
+wait a specified number of seconds before continuing at next host
+
+=item --prompt
+
+raise a prompt after each host which provides the possibility to
+to open a shell, re-execute, quit
+
+=back
+
+=head1 DESCRIPTION
+
+B<hostctl> is a generic tool which supports batched execution of tasks
+on groups of hosts.
+
+=head1 EXAMPLES
+
+=over
+
+=item Show disk usage on all systems which belong to group 'foobar'
+
+C<hostctl -c 'df -h' foobar>
+
+=item Show a aggregated view of all cronjobs running on a cluster
+
+C<hostctl -c "crontab -l -u www-user"  webcluster01 -q | less>
+
+=item Show disk usage on all systems which belong to group 'foobar', ask after every node what to do next
+
+C<hostctl -p -c 'df -h' foobar>
+
+=item Execute ncurses application 'top' on all systems which belong to group 'foobar'
+
+C<hostctl -t -c 'top' foobar>
+
+=item Copy files using rsync to a remotehost
+
+C<hostctl -e 'rsync -avP /tmp/foo HOST:/tmp/bar' foobar>
+
+=item Execute script/recipe 'apache_status' on all systems which belong to group 'foobar'
+
+C<hostctl -r apache_status foobar>
+
+C<hostctl -r /foo/bar/baz/apache_status foobar>
+
+=item Login sequentially on all hosts which belong to group 'foobar'
+
+C<hostctl -l foobar>
+
+=item Start a screen session with 'top' on all systems which belong to group 'foobar'
+
+C<hostctl -c 'top' --inscreen my-magic-screen foobar>
+
+C<screen -x my-magic-screen>
+
+=back
+
+=head1 ENVIRONMENT VARIABLES
+
+=over
+
+=item HOSTCTL_CONFIG
+
+Define a alternate configuration location
+
+Default search order:
+~/.hostctl/hostctl.conf,
+<HOSTCTL BINARY DIRECTORY>/hostctl.conf
+
+=item HOSTCTL_CONFIG_DYNAMIC_SCRIPT
+
+Get additional group definitions by reading stdout of the given script
+
+=back
+
+=head1 BUGS
+
+features :-)
+
+=head1 VERSION
+
+$Id: hostctl 1296 2013-04-26 07:11:41Z schoemar $
+
+=head1 AUTHOR
+
+Marc Schoechlin <ms@256bit.org>
+
+Marc Schoechlin <marc.schoechlin@dmc.de>
+
+=cut

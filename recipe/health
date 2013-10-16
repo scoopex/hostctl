@@ -1,0 +1,8 @@
+
+set -x
+top -c -b -n 1|head -15
+nfsstat -3
+vmstat 5 2
+iostat -m 5 2
+
+exit 0

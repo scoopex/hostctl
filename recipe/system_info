@@ -1,0 +1,18 @@
+
+echo "||<tablewidth=\"40%\">'''System'''||'''`uname -n`'''||"
+dmidecode -t processor|egrep "Family:|Manufacturer:|Version:"|sed '~s,\t*,,'|awk -F ":" '
+{
+print "||" $1 "||" $2 "||";
+}
+'
+dmidecode -t memory|grep "Size:"|sort |uniq -c|awk '
+        /Size: [0-9][0-9]* MB$/{
+          printf("||Memory||%s Modules of %s MB||\n", $1, $3, "MB");
+          sum= sum + $3;
+        }
+        '
+
+for i in /dev/sd?;
+do
+  echo "||Disk $i||$(( `blockdev --getsize64 $i` / 1024 / 1024 )) GB||"
+done

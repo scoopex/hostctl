@@ -1,0 +1,4 @@
+set -x
+sudo /etc/init.d/apache2 configcheck
+sudo /etc/init.d/apache2 status
+sudo /etc/init.d/apache2 server-status

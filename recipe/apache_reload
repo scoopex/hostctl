@@ -1,0 +1,6 @@
+
+if [ -f /etc/init.d/apache2 ];then
+	sudo /etc/init.d/apache2 reload
+else
+	sudo /etc/init.d/httpd reload
+fi

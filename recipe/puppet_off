@@ -1,0 +1,9 @@
+
+set -x
+
+if ( which update-rc.d &>/dev/null );then
+   update-rc.d -f puppet remove && /etc/init.d/puppet stop
+else
+   chkconfig puppet off && /etc/init.d/puppet stop
+fi
+

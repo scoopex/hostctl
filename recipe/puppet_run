@@ -1,0 +1,17 @@
+
+set -x
+puppet agent --test
+RET="$?"
+set +x
+
+echo 
+echo
+if [ "$RET" = "1" ];then
+	echo "FAILED"
+   exit $RET
+else
+	echo "SUCCESS"
+   exit $RET
+fi
+
+read -p "PRESS ENTER TO CONTINUE/FINISH" A

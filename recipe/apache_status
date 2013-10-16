@@ -1,0 +1,32 @@
+#!/bin/bash
+
+w3m -dump http://127.0.0.1/server-status
+
+ps auxwwww|awk '
+   BEGIN{
+     a=0;
+     c=0;
+     max=0;
+     min=0;
+   }
+   /\/httpd2-prefork|\/apache2/{
+     a = a + $6; 
+     c++
+     if ($6 > max){
+	max = $6;
+     }
+     if ((min == 0) || (min > $6)){
+	min = $6;
+     }
+    }
+   END{
+     printf("RSS MEMORY\n");
+     printf("----------------------------------------------------\n");
+     printf("TOTAL             : %i mbytes\n",a/1024)
+     printf("BIGGEST CHILD     : %i mbytes\n",max/1024)
+     printf("SMALLEST CHILD    : %i mbytes\n",min/1024)
+     printf("AVERAGE CHILD     : %i mbytes\n",a/c/1024)
+     printf("NUMBER OF CHILDS  : %i processes\n",c)
+   }'
+
+uptime

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if ( grep -q "report = true" /etc/puppet/puppet.conf );then
+  cat >> /etc/puppet/puppet.conf <<EOF
+runinterval = 3600
+report = true
+EOF
+fi
+
+set -x
+zypper install puppet lsb-release facter rubygem-ruby-augeas augeas  augeas rubygem-ruby-augeas libaugeas0 augeas-lenses
+chkconfig puppet on
+puppet agent --no-daemonize --verbose --onetime --noop
+service puppet start

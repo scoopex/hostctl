@@ -1,0 +1,9 @@
+
+set -x
+
+if ( which update-rc.d &>/dev/null );then
+   update-rc.d -f puppet defaults && /etc/init.d/puppet start
+else
+   chkconfig puppet on && /etc/init.d/puppet start
+fi
+

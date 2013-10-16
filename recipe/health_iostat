@@ -1,0 +1,3 @@
+
+set -x
+iostat -d -x 120 -t |tee -a /tmp/iostat.txt
