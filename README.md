@@ -1,9 +1,9 @@
 hostctl
 ===========
 
+Convenient management and execution of comand on groups of hosts
 
-Install
--------------------
+# Install
 
 
 Software prerequisites:
@@ -15,8 +15,7 @@ Software prerequisites:
 
 Install script:
  
-On Ubuntu just do
-(This will install the binary 'hostctl' to /etc/zabbix/externalscripts):
+On Ubuntu just do:
 ```
 INSTALLDIR="/opt/"
 cd $INSTALLDIR
@@ -32,22 +31,20 @@ Configure your environments:
  * Activate ssh agent forwarding (openssh: ForwardAgent yes) on your desktop ssh client and all systems you want to use "hostctl"
  * Activate ssh agent-forwarding (openssh: AllowAgentForwarding yes, default value) on your ssh servers 
 
-Usage
------
+# Usage
 
 Invoke hostctl to execute commands or scripts on the specified hosts.
 
 See also "EXAMPLES" section.
 
-Manpage:
+# Manpage:
 (output of "hostctl -h")
 ```
 License - see: LICENSE.txt
 
 
 NAME
-    hostctl - convenient management and execution of comand on groups of
-    hosts
+    hostctl - convenient management and execution of comand on groups of hosts
 
 SYNOPSIS
     hostctl [OPTIONS] [GROUPNAMES]
@@ -183,7 +180,7 @@ AUTHOR
 
 ```
 
-Configuration file format (hostctl.conf):
+# Configuration file format (hostctl.conf):
 ```
 #<perl-regex for visibility> : <groupname> : <host>, <host>, ...
 foobar-l01-(ap|db)\d+ : web1 :  foobar-l01-ap01, foobar-l01-ap02, foobar-l01-ap03, foobar-l01-ap04, foobar-l01-ap05, foobar-l01-ap06
@@ -199,14 +196,12 @@ jump-barfoo : db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
     * Hostgroup db2 is only visible/usable on host jump-barfoo
    
 
-Missing features
-----------------
+# Missing features
 - [ ] cluster shell mode with "--inscreen" : send STDIN of a master terminal to all screens
 - [ ] packaging for rpm and deb
 - [ ] ...
 
-Licence and Authors
--------------------
+# Licence and Authors
 
 Additional authors are very welcome - just submit your patches as pull requests.
 
