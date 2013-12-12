@@ -1,0 +1,33 @@
+#!/bin/bash
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:$PATH"
+
+EXEC(){
+
+ local CMD="$1"
+ echo "+ $CMD"
+ eval "$CMD"
+
+}
+
+echo "***********************************************************"
+echo "*** `hostname -f`"
+
+
+EXEC "multipath -ll"
+EXEC "fdisk -l"
+EXEC "df -t ext3 -t ext4 -t xfs -t nfs -t btrfs -h"
+EXEC "vgdisplay -vv"
+EXEC "mount -l"
+EXEC "ip link ls"
+EXEC "ip addr list"
+EXEC "ip route list table all"
+EXEC "route -n"
+EXEC "iptables -L"
+EXEC "iptables -t nat -n -L"
+EXEC 'ps faxo user,uid,nice,cmd|egrep -v "\[.*\]"'
+EXEC 'netstat -nlp|egrep "^(tcp|udp) .* LISTEN"'
+EXEC "egrep 'vendor_id|model name|cpu MHz|cache size|core id|siblings|cpu cores' /proc/cpuinfo"
+EXEC "free -m"
+EXEC "lspci"
+
