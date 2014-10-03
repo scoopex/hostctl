@@ -193,10 +193,10 @@ jump-barfoo : web2 :  barfoo-l01-ap01, barfoo-l01-ap02, barfoo-l01-ap03, barfoo-
 jump-barfoo : db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
 ```
    
-    * Hostgroup web1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
-    * Hostgroup db1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
-    * Hostgroup web2 is only visible/usable on host jump-barfoo
-    * Hostgroup db2 is only visible/usable on host jump-barfoo
+ * Hostgroup web1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
+ * Hostgroup db1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
+ * Hostgroup web2 is only visible/usable on host jump-barfoo
+ * Hostgroup db2 is only visible/usable on host jump-barfoo
    
 
 # Missing features
