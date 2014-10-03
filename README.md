@@ -23,6 +23,7 @@ git clone https://github.com/scoopex/hostctl.git hostctl
 cd hostctl
 sudo apt-get install perl perl-doc ssh man screen
 ln -snf $INSTALLDIR/hostctl /usr/bin/hostctl
+echo "source $INSTALLDIR/misc/hostctl_bash_completion.sh" >> .bashrc
 ```
 
 Configure your environments:
