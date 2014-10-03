@@ -1,15 +1,20 @@
 #!/bin/bash
 
-w3m -dump http://127.0.0.1/server-status
+export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/usr/bin:/bin:$PATH"
 
-ps auxwwww|awk '
+if [ -z "$1" ];then
+   echo "$0 total|biggest|smallest|average|number"
+   exit 1
+fi
+
+ps auxwwww|awk -v what="$1" '
    BEGIN{
      a=0;
      c=0;
      max=0;
      min=0;
    }
-   /\/httpd2-prefork|\/apache2/{
+   /\/httpd2-prefork|\/apache2|\/httpd/{
      a = a + $6; 
      c++
      if ($6 > max){
@@ -29,4 +34,3 @@ ps auxwwww|awk '
      printf("NUMBER OF CHILDS  : %i processes\n",c)
    }'
 
-uptime

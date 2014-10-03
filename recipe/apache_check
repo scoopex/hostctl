@@ -1,4 +1,10 @@
 set -x
-sudo /etc/init.d/apache2 configcheck
-sudo /etc/init.d/apache2 status
-sudo /etc/init.d/apache2 server-status
+if [ -f /etc/init.d/apache2 ];then
+   sudo /etc/init.d/apache2 configcheck
+   sudo /etc/init.d/apache2 status
+   sudo /etc/init.d/apache2 server-status
+else
+   sudo /etc/init.d/httpd configcheck
+   sudo /etc/init.d/httpd status
+   sudo /etc/init.d/httpd server-status
+fi
