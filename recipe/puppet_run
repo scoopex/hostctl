@@ -1,6 +1,6 @@
 
 set -x
-puppet agent --test
+sudo puppet agent --test
 RET="$?"
 set +x
 
