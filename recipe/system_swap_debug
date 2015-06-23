@@ -1,8 +1,7 @@
 #!/bin/bash
 
-
+export C="$(cat <<'EOF'
 LIMIT=30
-
 while true; do 
   SWAPUSAGE="$(awk '/^\//{print int(($4/$3)*100)}' /proc/swaps)" ;
   if [ $SWAPUSAGE -gt $LIMIT ];then
@@ -17,5 +16,9 @@ while true; do
   fi
   sleep 60; 
 done
+EOF
+)"
 
+set -x
+screen -S swap-debug -d -m bash -c "$C" 
 
