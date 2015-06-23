@@ -2,8 +2,9 @@
 set -x
 
 if ( which update-rc.d &>/dev/null );then
-   update-rc.d -f puppet defaults && /etc/init.d/puppet start
+   sudo perl -i -pe '~s,START=no,START=yes,' /etc/default/puppet
+   sudo update-rc.d -f puppet defaults && sudo /etc/init.d/puppet start
 else
-   chkconfig puppet on && /etc/init.d/puppet start
+   sudo chkconfig puppet on && sudo /etc/init.d/puppet start
 fi
 

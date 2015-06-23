@@ -5,6 +5,7 @@ if (which apt-get &>/dev/null);then
    sudo apt-get upgrade -y
    sudo apt-get dist-upgrade -y
    sudo apt-get clean
+   sudo puppet agent -t
 elif (which yum &>/dev/null);then
    sudo yum update
 elif (which zypper &>/dev/null);then

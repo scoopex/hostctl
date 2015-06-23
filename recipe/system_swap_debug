@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+LIMIT=30
+
+while true; do 
+  SWAPUSAGE="$(awk '/^\//{print int(($4/$3)*100)}' /proc/swaps)" ;
+  if [ $SWAPUSAGE -gt $LIMIT ];then
+     echo "$(date) ::: SWAP TO HIGH => $SWAPUSAGE %"
+     ps -auxwwww --sort -rss|logger -s -t "swapmon" 
+     for jpid in $(pgrep java|xargs);do
+        echo "CREATING THREADUMP FOR PID $jpid"
+	     sudo kill -QUIT $jpid
+     done
+  else
+     echo "$(date) ::: SWAP OK => $SWAPUSAGE %"
+  fi
+  sleep 60; 
+done
+
+
