@@ -505,10 +505,11 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    if(defined $prompt){
 	my $ask_loop = 1;
 	while($ask_loop != 0){	
-		out("(c)ontinue, (r)etry, (s)hell, (q)uit : ","info");
+		out("(c)ontinue, (a)ll, (r)etry, (s)hell, (q)uit : ","info");
 		my $pr =  readline(*STDIN);
 		chomp($pr);
 		if ($pr eq "q"){ exit(1); }
+		if ($pr eq "a"){ $prompt = undef ; goto EXECUTE; }
 		if ($pr eq "c"){ $ask_loop = 0; }
 		if ($pr eq "r"){ goto EXECUTE; }
 		if ($pr eq "s"){ system($login_cmd) ;}
