@@ -1,11 +1,31 @@
 
-set -x
 if (which apt-get &>/dev/null);then
+
+   if ( grep "disabled_message" /var/lib/puppet/state/agent_disabled.lock ); then
+     exit 1
+   fi
+   set -x
+   puppet agent --disable "System Upgrade in progress"
+   sudo apt-get autoremove
    sudo apt-get update -q 
    sudo apt-get upgrade -y
    sudo apt-get dist-upgrade -y
    sudo apt-get clean
-   sudo puppet agent -t
+   sudo puppet agent --enable
+   set +x
+
+   for i in `seq 1 15`;
+   do
+      if [ -f /var/lib/puppet/state/agent_catalog_run.lock ];then
+        echo "WAITING $i/15 (10 seconds)"
+        sleep 10
+      else
+        set -x
+        sudo puppet agent -t
+        set +x
+        break
+      fi
+   done
 elif (which yum &>/dev/null);then
    sudo yum update
 elif (which zypper &>/dev/null);then
