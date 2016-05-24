@@ -7,3 +7,6 @@ else
    sudo chkconfig puppet off && sudo /etc/init.d/puppet stop
 fi
 
+echo "===========================================================================" >> /etc/motd 
+echo "=======================> DISABLED BY ADMINISTRATOR <=======================" >> /etc/motd 
+echo "===========================================================================" >> /etc/motd 
