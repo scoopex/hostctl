@@ -6,7 +6,7 @@ EXEC(){
 
  local CMD="$1"
  echo "+ $CMD"
- eval "$CMD"
+ eval "$CMD" 2>&1
 
 }
 
@@ -21,12 +21,12 @@ EXEC "vgdisplay -vv"
 EXEC "mount -l"
 EXEC "ip link ls"
 EXEC "ip addr list"
-EXEC "ip route list table all"
+EXEC "ip route list table all|sort"
 EXEC "route -n"
 EXEC "iptables -L"
 EXEC "iptables -t nat -n -L"
-EXEC 'ps faxo user,uid,nice,cmd|egrep -v "\[.*\]"'
-EXEC 'netstat -nlp|egrep "^(tcp|udp) .* LISTEN"'
+EXEC 'ps faxo user,uid,nice,cmd --sort=cmd|egrep -v "\[.*\]"'
+EXEC 'netstat -nlp|egrep "^(tcp|udp) .* LISTEN"|sort'
 EXEC "egrep 'vendor_id|model name|cpu MHz|cache size|core id|siblings|cpu cores' /proc/cpuinfo"
 EXEC "free -m"
 EXEC "lspci"
