@@ -6,7 +6,7 @@ EXEC(){
 
  local CMD="$1"
  echo "+ $CMD"
- eval "$CMD" 2>&1
+ eval "sudo $CMD" 2>&1
 
 }
 
