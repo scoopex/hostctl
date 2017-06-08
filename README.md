@@ -3,8 +3,6 @@ hostctl
 
 Convenient management and execution of comand on groups of hosts
 
-You love this project? Send a donation to the following bitcoin wallet: 1EGoDhAmaZbLazNmdZ9vDu2zYgFCKsNur5 
-
 # Install
 
 
