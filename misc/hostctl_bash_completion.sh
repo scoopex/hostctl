@@ -3,6 +3,15 @@
 ### Bash Autocompletion for hostctl
 ### include this file in your .bash_profile or .bashrc to use completion
 ###
+
+_hostctl_get_allnodes()
+{
+   (
+      hostctl -s --array all |tr ' ' '\n'
+      grep -P "^\s*Host\s+[a-zA-Z]" ${HOME}/.ssh/config|awk '{print $2}'
+   ) 2>/dev/null | sort -u | tr '\n' ' '
+}
+
 _hostctl()
 {
     local cur=${COMP_WORDS[COMP_CWORD]}
@@ -21,7 +30,7 @@ _hostctl()
          next="$(hostctl 2>/dev/null| egrep "^ .*[ ][ ]*/"|awk '{print $1}'|xargs)"
       ;;
       --nodes|-n)
-         next="$(hostctl -s --array all 2>/dev/null)"
+         next="$(_hostctl_get_allnodes)"
       ;;
 
       *)
