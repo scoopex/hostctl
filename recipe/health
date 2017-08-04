@@ -4,5 +4,7 @@ top -c -b -n 1|head -15
 nfsstat -3
 vmstat 5 2
 iostat -m 5 2
+free
+ps -eo rss,pid,user,command --sort -size|awk '{ hr=$1/1024 ; sum=hr+sum; print $0 }END{print "Total RSS: " sum " MB"}'
 
 exit 0

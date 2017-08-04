@@ -1,0 +1,4 @@
+
+free
+ps -eo rss,pid,user,command --sort -size|awk '{ hr=$1/1024 ; sum=hr+sum; if (NR < 20) {print $0;} }END{print "Total RSS: " sum " MB"}'
+
