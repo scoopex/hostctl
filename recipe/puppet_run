@@ -6,11 +6,17 @@ set +x
 
 echo 
 echo
-if [ "$RET" == "1" ];then
+if [ "$RET" == "0" ];then
+	echo "SUCCESS"
+   exit $RET
+elif [ "$RET" == "1" ];then
 	echo "FAILED"
    exit $RET
-else
+elif [ "$RET" == "2" ];then
 	echo "SUCCESS"
+   exit 0
+else
+	echo "FAILED"
    exit $RET
 fi
 
