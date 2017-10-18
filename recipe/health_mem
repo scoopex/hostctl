@@ -1,4 +1,12 @@
 
 free
-ps -eo rss,pid,user,command --sort -size|awk '{ hr=$1/1024 ; sum=hr+sum; if (NR < 20) {print $0;} }END{print "Total RSS: " sum " MB"}'
+TOTAL="$(free -b |grep Mem:|awk '{print $2}')"
+
+ps -eo rss,pid,user,command --sort -size|awk -v total=$TOTAL '
+   { hr=$1/1024 ; sum=hr+sum; if (NR < 20) {print $0;} }
+   END{
+      total = total/1024/1024;
+      percent = (sum/total) * 100;
+      printf("Total RSS usage %0.3f MB of %0.3f MB total memory (%0.3f percent)\n", sum, total, percent) 
+   }'
 
