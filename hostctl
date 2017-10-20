@@ -120,7 +120,7 @@ sub usage(){
   print "===> Available recipes:\n";
   foreach my $recipedir(@{$recipedirs}){
   print "\nDirectory: $recipedir\n\n";
-  printf(" %-20s %s\n","Recipename","File");
+  printf(" %-30s %s\n","Recipename","File");
   if ( -d $recipedir ){
      opendir(IMD, "$recipedir") || die("Cannot open directory : $recipedir");
         foreach my $recipe(sort(readdir(IMD))){
@@ -128,10 +128,10 @@ sub usage(){
          next;
           }
           $recipe =~s ,^/,,; $recipedir =~s ,/$,,;
-          printf(" %-20s %s\n",$recipe,"$recipedir/$recipe");
+          printf(" %-30s %s\n",$recipe,"$recipedir/$recipe");
         }
      }else{
-         printf(" %-20s %s\n","<NONE>", "<NONE>");
+         printf(" %-30s %s\n","<NONE>", "<NONE>");
      }
   }
   print "\n";
