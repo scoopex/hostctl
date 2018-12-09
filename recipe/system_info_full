@@ -30,4 +30,5 @@ EXEC 'netstat -nlp|egrep "^(tcp|udp) .* LISTEN"|sort'
 EXEC "egrep 'vendor_id|model name|cpu MHz|cache size|core id|siblings|cpu cores' /proc/cpuinfo"
 EXEC "free -m"
 EXEC "lspci"
+EXEC "lsblk --output-all"
 

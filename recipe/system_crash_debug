@@ -1,2 +1,2 @@
 
-sudo screen -S crash-debug -d -m bash -c 'renice -20 -p $$; cd /var/log/ ; while true;do ( echo "=======> `date`"; top -b -n 1; vmstat 10 2;iostat -t -p ALL 10 2;ps fauxwwww;nfsstat -o all;lsof -n|awk "{print \$3 \$5;}"|grep -v USER|sort|uniq -c|sort -n ) 2>&1|tee crash-debug.log;sleep 30;done'
+sudo screen -S crash-debug -d -m bash -c 'renice -20 -p $$; cd /var/log/ ; while true;do ( echo "=======> `date`"; top -b -n 1; vmstat 10 2;iostat -t -p ALL 10 2;ps fauxwwww;nfsstat -o all;lsof -n|awk "{print \$3 \$5;}"|grep -v USER|sort|uniq -c|sort -n ) 2>&1|tee -a crash-debug.log;sleep 120;done'
