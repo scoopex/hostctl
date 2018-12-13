@@ -3,11 +3,13 @@ hostctl
 
 Convenient management and execution of comand on groups of hosts
 
+One day this tool will be replaced by Puppet Bolt (https://puppet.com/products/puppet-bolt).
+But unfortunately bolt currently lacks some interfactive features which ich need often.
+
 # Install
 
-
 Software prerequisites:
- * perl
+ * perl, libterm-readline-gnu-perl
  * ssh
  * perl-doc (to see the manpage with "hostctl -h")
  * man
@@ -21,7 +23,7 @@ INSTALLDIR="/opt/"
 cd $INSTALLDIR
 git clone https://github.com/scoopex/hostctl.git hostctl
 cd hostctl
-sudo apt-get install perl perl-doc ssh man screen
+sudo apt-get install perl perl-doc ssh man screen libterm-readline-gnu-perl
 ln -snf $INSTALLDIR/hostctl /usr/bin/hostctl
 echo "source $INSTALLDIR/misc/hostctl_bash_completion.sh" >> .bashrc
 ```

@@ -46,6 +46,7 @@ use Sys::Hostname;
 use Getopt::Long;
 use Term::ANSIColor;
 use File::Temp qw(tempfile);
+use Term::ReadLine;
 
 
 my $color_marker = "green";
@@ -476,7 +477,7 @@ foreach my $dhost (sort(keys(%target_hosts))) {
            ($exitcode & 127),  ($exitcode & 128) ? 'with' : 'without');
    }
    else {
-       $exittext = sprintf("child exited with value %d\n", $exitcode >> 8);
+       $exittext = sprintf("host %s exited with value %d\n", $dhost ,$exitcode >> 8);
    }
 
    if ($exitcode != 0) {
@@ -505,10 +506,11 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    if(defined $prompt){
 	my $ask_loop = 1;
 	while($ask_loop != 0){	
-		out("(c)ontinue, (a)ll, (r)etry, (s)hell, (q)uit : ","info");
+		out("(c)ontinue, (a)ll, (r)etry, (s)hell, (q)uit, (e)edit: ","info");
 		my $pr =  readline(*STDIN);
 		chomp($pr);
 		if ($pr eq "q"){ exit(1); }
+		if ($pr eq "e"){ $term = new Term::ReadLine 'MyInput'; $cmd = $term->readline('CMD: ', $cmd);}
 		if ($pr eq "a"){ $prompt = undef ; goto EXECUTE; }
 		if ($pr eq "c"){ $ask_loop = 0; }
 		if ($pr eq "r"){ goto EXECUTE; }
@@ -614,7 +616,8 @@ batchmode, no password prompting (skip host if not ssh-key auth is possible)
 
 =item --prompt
 
-ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit
+ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit, (e)dit
+
 
 =item --makeselection
 
