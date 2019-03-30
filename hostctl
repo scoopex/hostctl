@@ -70,6 +70,7 @@ my $show = undef;
 my $term = undef;
 my $login = undef;
 my $quiet = undef;
+my $forcecolor = undef;
 my $nodes = undef;
 my $batchmode = undef;
 my @wait = ();
@@ -147,7 +148,7 @@ sub out($$){
    if (defined $quiet){
 	return;
    }
-   if (-t STDOUT) {
+   if ((-t STDOUT) || (defined $forcecolor)){
      if ($type eq "ok"){
         print colored ($text, $color_marker);
      }elsif ($type eq "warn"){
@@ -306,6 +307,7 @@ my $rgetopt = GetOptions(
     'show'           => \$show,
     'quiet'          => \$quiet,
     'term'           => \$term,
+    'forcecolor'     => \$forcecolor,
     'wait=i'         => \@wait,
 );
 
@@ -596,6 +598,10 @@ show this manpage
 =item --show
 
 show group(s)
+
+=item --forcecolor
+
+disable automatic detection of interactive usage and output colors always
 
 =item --show --array
 
