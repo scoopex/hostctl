@@ -1,2 +1,52 @@
+#!/bin/bash
 
-sudo screen -S crash-debug -d -m bash -c 'renice -20 -p $$; cd /var/log/ ; while true;do ( echo "=======> `date`"; top -b -n 1; vmstat 10 2;iostat -t -p ALL 10 2;ps fauxwwww;nfsstat -o all;lsof -n|awk "{print \$3 \$5;}"|grep -v USER|sort|uniq -c|sort -n ) 2>&1|tee -a crash-debug.log;sleep 120;done'
+
+cat > /tmp/crashdebug.sh <<'EOF'
+#!/bin/bash
+renice -20 -p $$; 
+
+LOGDIR="/var/log/crashdebug/"
+mkdir -p $LOGDIR
+echo "$$" > $LOGDIR/pidfile
+
+while true;
+do 
+   LOGFILE="$LOGDIR/crashdebug-`date "+%Y-%m-%d_%H"`.log"
+   ( 
+   echo "=======> `date "+%Y-%m-%d_%H-%M-%S"`"; 
+   echo "+top -b -n 1"
+   top -b -n 1
+   echo "+vmstat 10 2"
+   vmstat 10 2
+   echo "+iostat -t -p ALL 10 2"
+   iostat -t -p ALL 10 2
+   echo "+ps fauxwwww"
+   ps fauxwwww
+   echo "+nfsstat -o all"
+   nfsstat -o all
+   echo "+ps -T -ef |awk '{print $2}'|sort|uniq -c|sort -rn|head -20"
+   ps -T -ef |awk '{print $2}'|sort|uniq -c|sort -rn|head -20
+   echo "+for pid in $(ps -o pid -e)...echo "** DESCRIPTORS OF PID $HPID / $NUM";lsof -p $HPID; done"
+   for pid in $(ps -o pid -e); do echo "$(find /proc/$pid/fd -type l 2>/dev/null|wc -l) $pid"; done|sort -nr|head -10|while read NUM HPID; do echo "** DESCRIPTORS OF PID $HPID / $NUM";lsof -p $HPID; done
+   ) 2>&1 |tee -a $LOGFILE
+
+   (
+      echo "=======> maintain logs"
+      LOCK_FILE="$LOGDIR/log-maintain.lock"
+      if ( ! ( set -C; : > $LOCK_FILE 2> /dev/null ) );then
+        echo "Already running"
+        exit 1
+      fi
+      trap "rm -f $LOCK_FILE; echo removed $LOCK_FILE" EXIT TERM INT
+      ionice -c3 nice -n 20 find $LOGDIR -maxdepth 1 -mmin +59 -name "crashdebug-*.log" -exec gzip {} \;
+      ionice -c3 nice -n 20 find $LOGDIR -maxdepth 1 -mtime +3 -name "crashdebug-*.log" -delete
+   ) &
+   sleep 120;
+done
+EOF
+
+chmod +x /tmp/crashdebug.sh
+
+if [ -z "$STY" ]; then 
+   screen -dm -S crashdebug /bin/bash "/tmp/crashdebug.sh"; 
+fi
