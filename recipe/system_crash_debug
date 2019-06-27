@@ -14,19 +14,21 @@ do
    LOGFILE="$LOGDIR/crashdebug-`date "+%Y-%m-%d_%H"`.log"
    ( 
    echo "=======> `date "+%Y-%m-%d_%H-%M-%S"`"; 
-   echo "+top -b -n 1"
+   echo '==> Processlist'
    top -b -n 1
-   echo "+vmstat 10 2"
+   echo '==> Processes in SWAP'
+   find /proc -maxdepth 2 -path "/proc/[0-9]*/status" -readable -exec awk -v FS=":" '{process[$1]=$2;sub(/^[ \t]+/,"",process[$1]);} END {if(process["VmSwap"] && process["VmSwap"] != "0 kB") printf "%10s %-30s %20s\n",process["Pid"],process["Name"],process["VmSwap"]}' '{}' \;
+   echo '==>vmstat 10 2'
    vmstat 10 2
-   echo "+iostat -t -p ALL 10 2"
+   echo '==> iostat -t -p ALL 10 2'
    iostat -t -p ALL 10 2
-   echo "+ps fauxwwww"
+   echo '==> ps fauxwwww'
    ps fauxwwww
-   echo "+nfsstat -o all"
+   echo '==> nfsstat -o all'
    nfsstat -o all
-   echo "+ps -T -ef |awk '{print $2}'|sort|uniq -c|sort -rn|head -20"
+   echo '==> Processes with lots of thread'
    ps -T -ef |awk '{print $2}'|sort|uniq -c|sort -rn|head -20
-   echo "+for pid in $(ps -o pid -e)...echo "** DESCRIPTORS OF PID $HPID / $NUM";lsof -p $HPID; done"
+   echo '==> Processes with lots of file descriptors'
    for pid in $(ps -o pid -e); do echo "$(find /proc/$pid/fd -type l 2>/dev/null|wc -l) $pid"; done|sort -nr|head -10|while read NUM HPID; do echo "** DESCRIPTORS OF PID $HPID / $NUM";lsof -p $HPID; done
    ) 2>&1 |tee -a $LOGFILE
 
@@ -49,4 +51,6 @@ chmod +x /tmp/crashdebug.sh
 
 if [ -z "$STY" ]; then 
    screen -dm -S crashdebug /bin/bash "/tmp/crashdebug.sh"; 
+   screen -ls crashdebug
+   exit $?
 fi
