@@ -29,7 +29,12 @@ do
    echo '==> Processes with lots of threads'
    ps -T -ef |awk '{print $2}'|sort|uniq -c|sort -rn|head -20
    echo '==> Processes with lots of file descriptors'
-   for pid in $(ps -o pid -e); do echo "$(find /proc/$pid/fd -type l 2>/dev/null|wc -l) $pid"; done|sort -nr|head -10|while read NUM HPID; do echo "** DESCRIPTORS OF PID $HPID / $NUM";lsof -p $HPID; done
+   for pid in $(ps -o pid -e); do 
+      echo "$(find /proc/$pid/fd -type l 2>/dev/null|wc -l) $pid"; 
+   done|sort -nr|head -10|while read NUM HPID; do 
+      echo "** DESCRIPTORS OF PID $HPID / $NUM";
+      lsof -n -p $HPID; 
+   done
 
    if (pgrep -u "postgres" >/dev/null 2>&1);then
        echo '==> POSTGRESQL'
