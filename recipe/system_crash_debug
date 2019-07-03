@@ -3,6 +3,8 @@
 
 cat > /tmp/crashdebug.sh <<'EOF'
 #!/bin/bash
+
+cd /tmp
 renice -20 -p $$; 
 
 LOGDIR="/var/log/crashdebug/"
@@ -33,15 +35,15 @@ do
       echo "$(find /proc/$pid/fd -type l 2>/dev/null|wc -l) $pid"; 
    done|sort -nr|head -10|while read NUM HPID; do 
       echo "** DESCRIPTORS OF PID $HPID / $NUM";
-      lsof -n -p $HPID; 
+      lsof -Pp $HPID; 
    done
 
-   if (pgrep -u "postgres" >/dev/null 2>&1);then
+   if (pgrep -u "postgres" 2>&1 >/dev/null);then
        echo '==> POSTGRESQL'
        sudo -u postgres psql --command "SELECT pid ,datname ,usename ,application_name ,client_hostname ,client_port ,backend_start ,query_start ,query FROM pg_stat_activity WHERE state <> 'idle' AND pid<>pg_backend_pid();"
    fi
 
-   if (pgrep -u "postgres" >/dev/null 2>&1);then
+   if (pgrep -u "postgres" 2>&1 >/dev/null);then
        echo '==> MYSQL'
        mysql -e "SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST where Info is not null;"
    fi
@@ -65,6 +67,7 @@ EOF
 chmod +x /tmp/crashdebug.sh
 
 if [ -z "$STY" ]; then 
+   screen -X -S crashdebug kill
    screen -dm -S crashdebug /bin/bash "/tmp/crashdebug.sh"; 
    sleep 1
    screen -ls crashdebug
