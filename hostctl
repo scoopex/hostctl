@@ -373,7 +373,7 @@ my $hosts_total = scalar(keys(%target_hosts));
 my $hosts_iter = 0;
 my @hosts_failed = ();
 my @hosts_success = ();
-
+my $tranche = 1;
 
 ## LOOP OVER HOSTS
 ##
@@ -383,8 +383,13 @@ my @hosts_success = ();
 ##
 foreach my $dhost (sort(keys(%target_hosts))) {
 
-   out("*** HOST: $dhost (Member of ".join(", ",@{$target_hosts{$dhost}})." [".++$hosts_iter."/".$hosts_total."])\n", "ok");
 
+   if(defined $prompt){
+        out("*** HOST: $dhost (Member of ".join(", ",@{$target_hosts{$dhost}})." [".++$hosts_iter."/".$hosts_total."]), prompt in $tranche hosts\n", "ok");
+        $tranche = $tranche - 1;
+   }else{
+        out("*** HOST: $dhost (Member of ".join(", ",@{$target_hosts{$dhost}})." [".++$hosts_iter."/".$hosts_total."])\n", "ok");
+   }
    if (defined $makeselection){
       while(1){
          out("\n(e)xecute, (s)kip, (q)uit : ","info");
@@ -505,16 +510,27 @@ foreach my $dhost (sort(keys(%target_hosts))) {
         sleep($wait[0]);
    }
 
-   if(defined $prompt){
+   if(defined $prompt && $tranche <= 0){
 	my $ask_loop = 1;
 	while($ask_loop != 0){	
-		out("(c)ontinue, (a)ll, (r)etry, (s)hell, (q)uit, (e)edit: ","info");
+		out("(c)ontinue, (t)ranche, (a)ll, (r)etry, (s)hell, (q)uit, (e)edit: ","info");
 		my $pr =  readline(*STDIN);
 		chomp($pr);
 		if ($pr eq "q"){ exit(1); }
-		if ($pr eq "e"){ $term = new Term::ReadLine 'MyInput'; $cmd = $term->readline('CMD: ', $cmd);}
+		if ($pr eq "e"){ 
+            $term = new Term::ReadLine 'MyInput'; 
+            $cmd = $term->readline('CMD: ', $cmd);
+        }
 		if ($pr eq "a"){ $prompt = undef ; goto EXECUTE; }
-		if ($pr eq "c"){ $ask_loop = 0; }
+		if ($pr eq "c"){ $ask_loop = 0; $tranche = 1}
+		if ($pr eq "t"){ 
+            out("\nhow many hosts should be processed before stopping? : ", "info");
+            $tranche = readline(*STDIN);
+            if ($tranche =~ /^\d+$/){
+                $ask_loop = 0;
+                $tranche = int($tranche)
+            }
+        }
 		if ($pr eq "r"){ goto EXECUTE; }
 		if ($pr eq "s"){ system($login_cmd) ;}
 	}
