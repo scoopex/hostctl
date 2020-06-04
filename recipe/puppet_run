@@ -1,5 +1,7 @@
+#!/bin/bash
 
 set -x
+sudo puppet agent --enable
 sudo puppet agent --test
 RET="$?"
 set +x

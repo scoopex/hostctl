@@ -55,7 +55,7 @@ my $color_marker_bad = "red";
 my $color_marker_info = "magenta";
 
 my $localhost = hostname;
-my $recipedirs = [ "$RealBin/recipe/", $ENV{"HOME"}."/.hostctl/recipe/" ];
+my $recipedirs = [ "$RealBin/recipe/", $ENV{"HOME"}."/.hostctl/recipe/" , "/etc/hostctl/recipe/" ];
 my @cfgfiles = ( $ENV{"HOME"}."/.hostctl/hostctl.conf", $RealBin."/hostctl.conf" );
 
 my %groups = ();
