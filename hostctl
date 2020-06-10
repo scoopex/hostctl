@@ -375,6 +375,11 @@ my @hosts_failed = ();
 my @hosts_success = ();
 my $tranche = 1;
 
+if ((defined $inscreen[0]) && (system('screen -ls '.$inscreen[0].' >/dev/null 2>&1') == 0)){
+    out("ERROR: There is already a screen named '".$inscreen[0]."'\n", "error");
+    exit(1);
+}
+
 ## LOOP OVER HOSTS
 ##
 ## DO NOT LAUGH ABOUT THE USE OF GOTOS :-)
@@ -459,7 +464,7 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    }
 
    if (defined $inscreen[0]){
-     	out("RUNNING in screen session '".$inscreen[0]."'\n", "warn");
+      out("RUNNING in screen session '".$inscreen[0]."'\n", "warn");
       if ($hosts_iter == 1){
   		   $go = "screen -t ".$dhost." -S ".$inscreen[0]." -d -m $go"
       }else{
@@ -496,8 +501,15 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    }
 
    if ((defined $inscreen[0]) && ($hosts_iter == 1) && (!defined $prompt)){
-        # Just wait for 2.5 second to startup screen
-        sleep(2.5);
+
+        for (my $i = 0; $i < 10; $i++) {
+            if (system('screen -ls '.$inscreen[0].' >/dev/null 2>&1') == 0){
+                goto INITSCREEN
+            }
+            sleep(1);
+        }
+
+        INITSCREEN:
         system('screen -x '.$inscreen[0].' -m -X defscrollback 10000');
         system('screen -x '.$inscreen[0].' -m -X caption always "%3n %t%? @%u%?%? [%h]%?"');
         system('screen -x '.$inscreen[0].' -m -X caption string "%{.ck} %n %t %{.gk}"');
