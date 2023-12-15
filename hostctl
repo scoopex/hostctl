@@ -730,8 +730,9 @@ C<screen -x my-magic-screen>
 Define a alternate configuration location
 
 Default search order:
-~/.hostctl/hostctl.conf,
-<HOSTCTL BINARY DIRECTORY>/hostctl.conf
+
+ 1. ~/.hostctl/hostctl.conf
+ 2. <HOSTCTL_BINARY_DIRECTORY>/hostctl.conf
 
 =item HOSTCTL_CONFIG_DYNAMIC_SCRIPT
 
