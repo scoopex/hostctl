@@ -7,7 +7,7 @@
 ### Marc Schoechlin <marc.schoechlin@dmc.de>
 ### Marc Schoechlin <ms@256bit.org>
 ###
-### 
+###
 ###   This program is free software: you can redistribute it and/or modify
 ###   it under the terms of the GNU General Public License as published by
 ###   the Free Software Foundation, either version 3 of the License, or
@@ -241,7 +241,7 @@ sub get_group_members($){
    my ($given_group) = @_;
    my @hosts =  ();
 
-   
+
 #   if ($given_group = ~m /(.*)\@(.*)/){
 #      $given_group=$2;
 #   }
@@ -356,7 +356,7 @@ if (@command > 0){
 }
 my %target_hosts;
 
-# Die Gruppen zusammenfassen
+# Combine groups
 foreach my $group (@given_items) {
     my @hosts = get_group_members($group);
 
@@ -428,7 +428,7 @@ foreach my $dhost (sort(keys(%target_hosts))) {
       if ($go =~m /HOST/){
          $go =~s /HOST/$dhost/g;
       }else{
-         $go = $go." ".$dhost; 
+         $go = $go." ".$dhost;
       }
    }
 
@@ -454,10 +454,13 @@ foreach my $dhost (sort(keys(%target_hosts))) {
      $wait[0] = 1;
    # Execute a specified command
    }elsif(defined $cmd){
-     $go = "ssh ".$ssh_opts."-o StrictHostKeyChecking=no $dhost \'$cmd\'" ;
+     ($tmpfh, $tmpfilename) = tempfile("hostctl-tmpfileXXXXX", DIR => "/tmp");
+     print $tmpfh $cmd."\n";
+     close($tmpfh);
+     $go = "ssh ".$ssh_opts."-o StrictHostKeyChecking=no $dhost 'bash -s' < ".$tmpfilename;
    }
 
-   if (defined $debug){ 
+   if (defined $debug){
      out("*" x 80 .  "\n", "ok");
      print $go."\n";
      out("*" x 80 .  "\n", "ok");
@@ -473,9 +476,9 @@ foreach my $dhost (sort(keys(%target_hosts))) {
       print $go."\n" if (!defined $quiet);
    }
 
- 
-   # A jump label to ease execution logic 
-   EXECUTE: 
+
+   # A jump label to ease execution logic
+   EXECUTE:
 
    my $exitcode = system($go);
    my $exittext = "0";
@@ -524,18 +527,18 @@ foreach my $dhost (sort(keys(%target_hosts))) {
 
    if(defined $prompt && $tranche <= 0){
 	my $ask_loop = 1;
-	while($ask_loop != 0){	
+	while($ask_loop != 0){
 		out("(c)ontinue, (t)ranche, (a)ll, (r)etry, (s)hell, (q)uit, (e)edit: ","info");
 		my $pr =  readline(*STDIN);
 		chomp($pr);
 		if ($pr eq "q"){ exit(1); }
-		if ($pr eq "e"){ 
-            $term = new Term::ReadLine 'MyInput'; 
+		if ($pr eq "e"){
+            $term = new Term::ReadLine 'MyInput';
             $cmd = $term->readline('CMD: ', $cmd);
         }
 		if ($pr eq "a"){ $prompt = undef ; goto EXECUTE; }
 		if ($pr eq "c"){ $ask_loop = 0; $tranche = 1}
-		if ($pr eq "t"){ 
+		if ($pr eq "t"){
             out("\nhow many hosts should be processed before stopping? : ", "info");
             $tranche = readline(*STDIN);
             if ($tranche =~ /^\d+$/){
@@ -598,7 +601,7 @@ command is executed on the remotehost.
 
 Execute a local command and add hostname to the command
 (Hostname will be appended to the command, or inserted where 'HOST' string
-is located in the string. 
+is located in the string.
 
 =item --recipe <name>|<path>
 
@@ -609,13 +612,13 @@ Alternatively, recipes can be called be their fully qualified path.
 
 =item --nodes
 
-Specify hosts instead of groups. 
+Specify hosts instead of groups.
 
 =item --debug
 
 debug mode
 
-=item --quiet 
+=item --quiet
 
 reduce output, useful for aggregating output of multiple hosts
 
@@ -687,9 +690,13 @@ on groups of hosts.
 
 C<hostctl -c 'df -h' foobar>
 
+=item Show disk usage on specific nodes
+
+C<hostctl -c 'df -h' -n node01 node03 node05>
+
 =item Show a aggregated view of all cronjobs running on a cluster
 
-C<hostctl -c "crontab -l -u www-user"  webcluster01 -q | less>
+C<hostctl -c "crontab -l -u www-user" webcluster01 -q | less>
 
 =item Show disk usage on all systems which belong to group 'foobar', ask after every node what to do next
 
