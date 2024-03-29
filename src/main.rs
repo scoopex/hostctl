@@ -1,17 +1,13 @@
 mod parameters;
 mod groups_config;
 mod utils;
+mod execute;
 
 use std::process::exit;
 use env_logger::Env;
 use clap::Parser;
-use inline_colorization::*;
 use crate::groups_config::{dump_batch_mode, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
-
-fn execute_node(node: String, iter_information: String) {
-    println!("{color_green}*** HOST: {} (Member of <Specified hostnames> {iter_information}){color_reset}", node)
-}
 
 fn main() {
     unsafe { libc::umask(0o077) };
@@ -50,6 +46,6 @@ fn main() {
             let membership_info = "Nodes";
             iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
         }
-        execute_node(node, iter_info);
+        execute::execute_node(node, iter_info.to_string());
     }
 }
