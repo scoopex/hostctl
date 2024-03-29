@@ -8,7 +8,7 @@ about = "convenient management and execution of command on groups of hosts",
 pub struct CommandLineArgs {
     /// Command to execute. A ssh login is performed on the specified hosts and the specified
     /// command is executed on the remotehost.
-    #[arg(short, long, required = false)]
+    #[arg(short, long, default_value = "")]
     pub(crate) command: String,
 
     // Execute a local command and add hostname to the command
@@ -29,8 +29,12 @@ pub struct CommandLineArgs {
     pub(crate) nodes: bool,
 
     /// show group(s)
-    #[arg(short, long, default_value = "all")]
-    pub(crate) show: Vec<String>,
+    #[arg(short, long )]
+    pub(crate) show: bool,
+
+    /// output json format
+    #[arg(short, long )]
+    pub(crate) json: bool,
 
     /// debug mode
     #[arg(short, long)]
