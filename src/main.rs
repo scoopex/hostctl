@@ -2,10 +2,11 @@ mod parameters;
 
 use env_logger::Env;
 use clap::Parser;
+use inline_colorization::*;
 use crate::parameters::CommandLineArgs;
 
-fn execute_node(node: String){
-    println!("*** HOST: {} (Member of <Specified hostnames> [1/2])", node)
+fn execute_node(node: String, iter_information: String){
+    println!("{color_green}*** HOST: {} (Member of <Specified hostnames> {iter_information}){color_reset}", node)
 }
 
 fn main() {
@@ -16,7 +17,13 @@ fn main() {
         Env::default().default_filter_or(args.log_level)
     ).format_timestamp_secs().init();
 
-    for node in args.items{
-        execute_node(node);
+    let nodes = args.items;
+    let number_of_nodes = nodes.len();
+    let mut number_of_current = 0;
+
+    for node in nodes{
+        number_of_current += 1;
+        let iter_information= format!("[{number_of_current}/{number_of_nodes}]");
+        execute_node(node, iter_information);
     }
 }
