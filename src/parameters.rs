@@ -3,62 +3,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(author, version,
-
 about = "convenient management and execution of command on groups of hosts",
-
-long_about = r#"hostctl is a generic tool which supports batched execution of tasks
-    on groups of hosts.
-
-    Examples:
-        Show disk usage on all systems which belong to group 'foobar'
-            "hostctl -c 'df -h' foobar"
-
-        Show disk usage on specific nodes
-            "hostctl -c 'df -h' -n node01 node03 node05"
-
-        Show a aggregated view of all cronjobs running on a cluster
-            "hostctl -c "crontab -l -u www-user" webcluster01 -q | less"
-
-        Show disk usage on all systems which belong to group 'foobar', ask after
-        every node what to do next
-            "hostctl -p -c 'df -h' foobar"
-
-        Execute ncurses application 'top' on all systems which belong to group
-        'foobar'
-            "hostctl -t -c 'top' foobar"
-
-        Copy files using rsync to a remotehost
-            "hostctl -e 'rsync -avP /tmp/foo HOST:/tmp/bar' foobar"
-
-        Execute script/recipe 'apache_status' on all systems which belong to
-        group 'foobar'
-            "hostctl -r apache_status foobar"
-
-            "hostctl -r /foo/bar/baz/apache_status foobar"
-
-        Login sequentially on all hosts which belong to group 'foobar'
-            "hostctl -l foobar"
-
-        Start a screen session with 'top' on all systems which belong to group
-        'foobar'
-            "hostctl -c 'top' --inscreen my-magic-screen foobar"
-
-            "screen -x my-magic-screen"
-
-    ENVIRONMENT VARIABLES
-    HOSTCTL_CONFIG
-        Define a alternate configuration location
-
-        Default search order:
-
-         1. ~/.hostctl/hostctl.conf
-         2. <HOSTCTL_BINARY_DIRECTORY>/hostctl.conf
-
-    HOSTCTL_CONFIG_DYNAMIC_SCRIPT
-        Get additional group definitions by reading stdout of the given
-        script
-
-"#,
 )]
 pub struct CommandLineArgs {
     /// Command to execute. A ssh login is performed on the specified hosts and the specified
@@ -80,8 +25,8 @@ pub struct CommandLineArgs {
     pub(crate) recipe: String,
 
     /// Specify hosts instead of groups.
-    #[arg(short, long)]
-    pub(crate) nodes: Vec<String>,
+    #[arg(short, long,)]
+    pub(crate) nodes: bool,
 
     /// show group(s)
     #[arg(short, long, default_value = "all")]
@@ -127,21 +72,25 @@ pub struct CommandLineArgs {
     #[arg(short, long)]
     pub(crate) term: bool,
 
-    // wait a specified number of seconds before continuing at next host
+    /// wait a specified number of seconds before continuing at next host
     #[arg(short, long)]
     pub(crate) wait: bool,
 
-    // ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit, (e)dit
+    /// ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit, (e)dit
     #[arg(short, long)]
     pub(crate) prompt: bool,
 
-    // raise a prompt before each host which provides the possibility to
-    // confirm, skip or quit execution
+    /// raise a prompt before each host which provides the possibility to
+    /// confirm, skip or quit execution
     #[arg(short, long)]
     pub(crate) makeselection: bool,
 
     /// The log level
     #[arg(long, default_value = "info")]
     pub(crate) log_level: String,
+
+    /// Groups or nodes for the iteration
+    #[arg()]
+    pub(crate) items: Vec<String>,
 
 }
