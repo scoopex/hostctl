@@ -1,15 +1,7 @@
-use std::{fs, io};
 use std::collections::{HashMap, HashSet};
 use std::io::BufRead;
 use regex::Regex;
-
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<fs::File>>>
-    where
-        P: AsRef<std::path::Path>,
-{
-    let file = fs::File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}
+use crate::utils;
 
 pub fn dump_batch_mode(items: Vec<String>){
     let sorted_vec = unified_node_list(items);
@@ -58,7 +50,7 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
     let mut groups_map = std::collections::HashMap::new();
 
     for cfg_file in &cfg_files {
-        if let Ok(lines) = read_lines(cfg_file) {
+        if let Ok(lines) = utils::read_lines(cfg_file) {
             for line in lines {
                 if let Ok(host_line) = line {
                     if let Some(captures) = re.captures(&*host_line) {

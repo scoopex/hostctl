@@ -37,7 +37,7 @@ fn main() {
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
 
-    let execution_file: String = get_execution_file(&args.command,&args.recipe, &args.executelocal);
+    let execution_lines: String = utils::get_execution_lines(&args.command, &args.recipe, &args.executelocal);
 
     for node in nodes {
         number_of_current += 1;
@@ -52,20 +52,6 @@ fn main() {
         if args.executelocal != "" {
             local_execution = true;
         }
-        execute::execute_node(node, iter_info.to_string(), local_execution, &execution_file);
+        execute::execute_node(node, iter_info.to_string(), local_execution, &execution_lines);
     }
-}
-
-fn get_execution_file(command: &String, recipe: &String, executelocal: &String) -> String {
-    let mut execution_file: String = "".to_string();
-    if command != "" {
-        execution_file = "command".to_string();
-    }
-    else if executelocal != "" {
-        execution_file = "localcommand".to_string();
-    }
-    else if recipe != "" {
-        execution_file = "reciepe".to_string();
-    }
-    return execution_file;
 }
