@@ -37,15 +37,35 @@ fn main() {
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
 
-    for node in nodes{
+    let execution_file: String = get_execution_file(&args.command,&args.recipe, &args.executelocal);
+
+    for node in nodes {
         number_of_current += 1;
         let iter_info: String;
         if args.nodes {
             iter_info = format!(" [{number_of_current}/{number_of_nodes}]");
-        }else {
+        } else {
             let membership_info = "Nodes";
             iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
         }
-        execute::execute_node(node, iter_info.to_string());
+        let mut local_execution = false;
+        if args.executelocal != "" {
+            local_execution = true;
+        }
+        execute::execute_node(node, iter_info.to_string(), local_execution, &execution_file);
     }
+}
+
+fn get_execution_file(command: &String, recipe: &String, executelocal: &String) -> String {
+    let mut execution_file: String = "".to_string();
+    if command != "" {
+        execution_file = "command".to_string();
+    }
+    else if executelocal != "" {
+        execution_file = "localcommand".to_string();
+    }
+    else if recipe != "" {
+        execution_file = "reciepe".to_string();
+    }
+    return execution_file;
 }
