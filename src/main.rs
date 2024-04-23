@@ -37,7 +37,7 @@ fn main() {
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
 
-    let execution_lines: String = utils::get_execution_lines(&args.command, &args.recipe, &args.executelocal);
+    let execution_lines: Vec<String> = utils::get_execution_lines(&args.command, &args.recipe, &args.executelocal);
 
     for node in nodes {
         number_of_current += 1;

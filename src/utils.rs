@@ -33,13 +33,13 @@ pub fn output(msg: String, level: OutputType){
     }
 }
 
-pub fn get_execution_lines(command: &String, recipe: &String, execute_local: &String) -> String {
-    let mut execution_lines: Vec<String> = Vec::new();
+pub fn get_execution_lines(command: &String, recipe: &String, execute_local: &String) -> Vec<String> {
+    let mut raw_execution_lines: Vec<String> = Vec::new();
     if command != "" {
-        execution_lines.push(command.clone());
+        raw_execution_lines.push(format!("{command}\n"));
     }
     else if execute_local != "" {
-        execution_lines.push(execute_local.clone());
+        raw_execution_lines.push(format!("{execute_local}\n"));
     }
     else if recipe != "" {
         let recipe_files = [
@@ -47,19 +47,18 @@ pub fn get_execution_lines(command: &String, recipe: &String, execute_local: &St
             format!("{}/recipe/{}", env!("PWD"),recipe),
         ];
         for recipe_file in &recipe_files {
-            println!("----> {}", recipe_file);
             if let Ok(lines) = read_lines(recipe_file) {
-                println!("YEAH {}", recipe_file);
                 if let Ok(lines) = read_lines(recipe_file) {
                     for line in lines {
-                        execution_lines.push(line.unwrap().clone());
+                        raw_execution_lines.push(line.unwrap().clone());
                     }
                     break;
                 }
             }
         }
     }
-    return execution_lines.join("\n");
+
+    return raw_execution_lines;
 }
 
 pub(crate) fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<fs::File>>>
