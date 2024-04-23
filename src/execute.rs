@@ -1,3 +1,4 @@
+use std::vec;
 use crate::utils::output;
 use crate::utils::OutputType;
 
@@ -7,7 +8,17 @@ pub fn execute_node(node: String, iter_information: String, local_execution: boo
         output_text = format!("*** LOCAL: {node} {iter_information}");
     }
     output(output_text, OutputType::Info);
-    for line in execution_lines {
+    let templated_lines = template_lines(execution_lines);
+    for line in templated_lines {
         output(line.clone(), OutputType::Debug);
     }
+}
+
+fn template_lines(execution_lines: &Vec<String>) -> Vec<String> {
+    let mut templated_commands: Vec<String> = Vec::new();
+    for line in execution_lines {
+        // replace
+        templated_commands.push(line.clone());
+    }
+    templated_commands
 }
