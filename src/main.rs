@@ -12,13 +12,16 @@ use crate::parameters::CommandLineArgs;
 fn main() {
     unsafe { libc::umask(0o077) };
 
-    let args = CommandLineArgs::parse();
+    let mut args = CommandLineArgs::parse();
 
     env_logger::Builder::from_env(
         Env::default().default_filter_or(args.log_level)
     ).format_timestamp_secs().init();
 
     if args.show {
+        if args.items.len() == 0 {
+            args.items.push("all".to_string());
+        }
         dump_groups(args.items, args.json);
         exit(0);
     }

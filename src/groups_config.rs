@@ -40,7 +40,7 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
     ];
 
     let mut select_all = false;
-    if items.len() == 0 || items.contains(&"all".to_string()){
+    if items.contains(&"all".to_string()){
         select_all = true;
     }
 
