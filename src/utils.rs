@@ -17,7 +17,6 @@ use inline_colorization::color_reset;
 #[derive(Debug, PartialEq)]
 pub enum OutputType {
     Info,
-    Warn,
     Error,
     Debug,
 }
@@ -48,13 +47,11 @@ pub fn get_execution_lines(command: &String, recipe: &String, execute_local: &St
         ];
         for recipe_file in &recipe_files {
             if let Ok(lines) = read_lines(recipe_file) {
-                if let Ok(lines) = read_lines(recipe_file) {
                     for line in lines {
                         raw_execution_lines.push(line.unwrap().clone());
                     }
                     break;
                 }
-            }
         }
     }
 
