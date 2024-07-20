@@ -11,11 +11,11 @@ pub struct CommandLineArgs {
     #[arg(short, long, default_value = "")]
     pub(crate) command: String,
 
-    // Execute a local command and add hostname to the command
+    /// Execute a as local command and add hostname to the command
     /// (Hostname will be appended to the command, or inserted where 'HOST' string
     /// is located in the string.
-    #[arg(short, long, default_value = "")]
-    pub(crate) executelocal: String,
+    #[arg(short, long)]
+    pub(crate) execute_local: bool,
 
     /// Recipe to execute. A recipe is a shellscript which defines recurring administration tasks.
     /// Recipes can be stored in $HOME/.hostctl/recipe/ or <hostctl-installation-path>/recipe/ and can
@@ -43,7 +43,6 @@ pub struct CommandLineArgs {
     /// disable automatic detection of interactive usage and output colors always
     #[arg(short, long)]
     pub(crate) forcecolor: bool,
-
 
     /// reduce output, useful for aggregating output of multiple hosts
     #[arg(short, long)]

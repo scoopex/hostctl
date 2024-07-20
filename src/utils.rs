@@ -32,13 +32,10 @@ pub fn output(msg: String, level: OutputType){
     }
 }
 
-pub fn get_execution_lines(command: &String, recipe: &String, execute_local: &String) -> Vec<String> {
+pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
     let mut raw_execution_lines: Vec<String> = Vec::new();
     if command != "" {
         raw_execution_lines.push(format!("{command}\n"));
-    }
-    else if execute_local != "" {
-        raw_execution_lines.push(format!("{execute_local}\n"));
     }
     else if recipe != "" {
         let recipe_files = [

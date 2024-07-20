@@ -6,11 +6,16 @@ mod execute;
 use std::process::exit;
 use env_logger::Env;
 use clap::Parser;
+use clap::CommandFactory;
 use crate::groups_config::{dump_batch_mode, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
 
 fn main() {
     unsafe { libc::umask(0o077) };
+
+    ctrlc::set_handler(move || {
+        println!("received Ctrl+C!");
+    }).expect("Error setting Ctrl-C handler");
 
     let mut args = CommandLineArgs::parse();
 
@@ -31,30 +36,27 @@ fn main() {
     }
 
     let nodes: Vec<String>;
+    let mut only_nodes = false;
     if args.nodes {
         nodes = args.items;
-    }else{
-        nodes =  unified_node_list(args.items);
+        only_nodes = true;
+    } else {
+        nodes = unified_node_list(args.items);
     }
 
-    let number_of_nodes = nodes.len();
-    let mut number_of_current = 0;
+    if (args.command != "") != (args.recipe != "") {
+        let execution_lines: Vec<String> =
+            utils::get_execution_lines(&args.command, &args.recipe);
 
-    let execution_lines: Vec<String> = utils::get_execution_lines(&args.command, &args.recipe, &args.executelocal);
-
-    for node in nodes {
-        number_of_current += 1;
-        let iter_info: String;
-        if args.nodes {
-            iter_info = format!(" [{number_of_current}/{number_of_nodes}]");
+        if args.execute_local {
+            exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines));
         } else {
-            let membership_info = "Nodes";
-            iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
+            exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines));
         }
-        let mut local_execution = false;
-        if args.executelocal != "" {
-            local_execution = true;
-        }
-        execute::execute_node(node, iter_info.to_string(), local_execution, &execution_lines);
     }
+
+    let mut cmd = CommandLineArgs::command();
+    cmd.print_help().expect("Failed to print help");
+
 }
+
