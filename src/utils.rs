@@ -1,6 +1,6 @@
 use std::{fs, io};
 use std::io::BufRead;
-
+use std::process::exit;
 use inline_colorization::color_green;
 use inline_colorization::color_yellow;
 use inline_colorization::color_red;
@@ -19,17 +19,24 @@ pub enum OutputType {
     Info,
     Error,
     Debug,
+    Fatal,
 }
 
-
-pub fn output(msg: String, level: OutputType){
-    if level == OutputType::Info {
+pub fn output(msg: String, level: OutputType) {
+    if level == OutputType::Fatal {
+        println!("{color_red}{msg}{color_reset}");
+        exit(1);
+    }else if level == OutputType::Info {
         println!("{color_green}{msg}{color_reset}")
     }else if level == OutputType::Debug {
         println!("{color_yellow}{msg}{color_reset}")
     }else{
         println!("{color_red}{msg}{color_reset}")
     }
+}
+
+pub fn output_str(msg: &str, level: OutputType) {
+    output(msg.to_string(), level);
 }
 
 pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
@@ -39,8 +46,9 @@ pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
     }
     else if recipe != "" {
         let recipe_files = [
-            format!("{}/.hostctl/{}", env!("HOME"),recipe),
-            format!("{}/recipe/{}", env!("PWD"),recipe),
+            format!("{}/.hostctl/{}", env!("HOME"), recipe),
+            format!("{}/recipe/{}", env!("PWD"), recipe),
+            format!("{}", recipe),
         ];
         for recipe_file in &recipe_files {
             if let Ok(lines) = read_lines(recipe_file) {
@@ -49,6 +57,9 @@ pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
                     }
                     break;
                 }
+        }
+        if raw_execution_lines.len() == 0 {
+            output("Did not found a recipe or recipe was empty".to_string(),OutputType::Fatal);
         }
     }
 
