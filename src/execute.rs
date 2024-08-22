@@ -4,7 +4,10 @@ use crate::utils::OutputType;
 
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::thread;
+use std::time::Duration;
 use tempfile::NamedTempFile;
+use crate::parameters::CommandLineArgs;
 
 fn execute_local(templated_lines: Vec<String>) -> bool {
     let mut temp_file = NamedTempFile::with_prefix("hostctl_")
@@ -99,7 +102,7 @@ fn template_lines(execution_lines: &Vec<String>, node: &String) -> Vec<String> {
     templated_commands
 }
 
-pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, execution_lines: &Vec<String>, ssh_options: String) -> i32 {
+pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, execution_lines: &Vec<String>, args: CommandLineArgs) -> i32 {
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
     let mut failed_nodes: Vec<String> = Vec::new();
@@ -117,8 +120,12 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             let membership_info = "Nodes";
             iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
         }
-        if !execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, ssh_options.clone()){
+        if !execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, args.optssh.clone()){
             failed_nodes.push(node)
+        }
+        if args.wait > 0 {
+            output(format!("\nWaiting for {} seconds before continue\n", args.wait), OutputType::Info);
+            thread::sleep(Duration::from_secs(args.wait));
         }
     }
     if failed_nodes.len() > 0 {

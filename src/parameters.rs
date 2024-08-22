@@ -76,8 +76,8 @@ pub struct CommandLineArgs {
     pub(crate) term: bool,
 
     /// wait a specified number of seconds before continuing at next host
-    #[arg(short, long)]
-    pub(crate) wait: bool,
+    #[arg(short, long, default_value = "0")]
+    pub(crate) wait: u64,
 
     /// ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit, (e)dit
     #[arg(short, long)]

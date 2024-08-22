@@ -19,48 +19,49 @@ fn main() {
         exit(0);
     }).expect("Error setting Ctrl-C handler");
 
-    let mut args = CommandLineArgs::parse();
+    let mut commandline_args = CommandLineArgs::parse();
 
     env_logger::Builder::from_env(
-        Env::default().default_filter_or(args.log_level)
+        Env::default().default_filter_or(commandline_args.log_level.clone())
     ).format_timestamp_secs().init();
 
-    if args.show {
-        if args.items.len() == 0 {
-            args.items.push("all".to_string());
+    if commandline_args.show {
+        if commandline_args.items.len() == 0 {
+            commandline_args.items.push("all".to_string());
         }
-        dump_groups(args.items, args.json);
+        dump_groups(commandline_args.items, commandline_args.json);
         exit(0);
     }
-    if args.batchmode {
-        dump_batch_mode(args.items);
+    if commandline_args.batchmode {
+        dump_batch_mode(commandline_args.items);
         exit(0);
     }
 
     let nodes: Vec<String>;
+
     let mut only_nodes = false;
-    if args.nodes {
-        nodes = args.items;
+    if commandline_args.nodes {
+        nodes = commandline_args.items.clone();
         only_nodes = true;
     } else {
-        nodes = unified_node_list(args.items);
+        nodes = unified_node_list(commandline_args.items.clone());
     }
 
-    if (args.command != "") != (args.recipe != ""){
+    if (commandline_args.command != "") != (commandline_args.recipe != ""){
         let execution_lines: Vec<String> =
-            utils::get_execution_lines(&args.command, &args.recipe);
+            utils::get_execution_lines(&commandline_args.command, &commandline_args.recipe);
 
-        if args.execute_local {
-            exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, args.optssh));
+        if commandline_args.execute_local {
+            exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, commandline_args));
         } else {
-            exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines, args.optssh));
+            exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines, commandline_args));
         }
     }
 
-    if args.login {
+    if commandline_args.login {
         let mut execution_lines: Vec<String> = Vec::new();
-        execution_lines.push(format!("ssh {} HOST", args.optssh));
-        exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines,args.optssh));
+        execution_lines.push(format!("ssh {} HOST", commandline_args.optssh));
+        exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, commandline_args));
     }
 
     let mut cmd = CommandLineArgs::command();
