@@ -9,6 +9,7 @@ use clap::Parser;
 use clap::CommandFactory;
 use crate::groups_config::{dump_batch_mode, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
+use crate::utils::dump_recipes;
 
 fn main() {
     unsafe { libc::umask(0o077) };
@@ -63,6 +64,7 @@ fn main() {
 
     let mut cmd = CommandLineArgs::command();
     cmd.print_help().expect("Failed to print help");
+    dump_recipes();
 
 }
 
