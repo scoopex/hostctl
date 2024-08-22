@@ -4,7 +4,7 @@ use crate::utils;
 
 pub fn dump_batch_mode(items: Vec<String>){
     let sorted_vec = unified_node_list(items);
-    println!("{}", sorted_vec.join(", "));
+    println!("{}", sorted_vec.join(" "));
 }
 
 pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
