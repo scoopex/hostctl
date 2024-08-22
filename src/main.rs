@@ -9,13 +9,14 @@ use clap::Parser;
 use clap::CommandFactory;
 use crate::groups_config::{dump_batch_mode, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
-use crate::utils::dump_recipes;
+use crate::utils::{dump_recipes, output_str, OutputType};
 
 fn main() {
     unsafe { libc::umask(0o077) };
 
     ctrlc::set_handler(move || {
-        println!("received Ctrl+C!");
+        output_str("\n\nReceived Ctrl+C! Immediate stop!", OutputType::Fatal);
+        exit(0);
     }).expect("Error setting Ctrl-C handler");
 
     let mut args = CommandLineArgs::parse();
