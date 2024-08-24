@@ -18,7 +18,7 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
     }
     let mut sorted_vec: Vec<String> = unified_set.iter().cloned().collect();
     sorted_vec.sort();
-    return sorted_vec;
+    sorted_vec
 }
 
 pub fn dump_groups(items: Vec<String>, json: bool)  {
@@ -67,5 +67,5 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
             }
         }
     }
-    return groups_map;
+    groups_map
 }

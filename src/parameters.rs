@@ -11,7 +11,7 @@ pub struct CommandLineArgs {
     #[arg(short, long, default_value = "")]
     pub(crate) command: String,
 
-    /// Execute a as local command and add hostname to the command
+    /// Execute as local command and add hostname to the command
     /// (Hostname will be appended to the command, or inserted where 'HOST' string
     /// is located in the string.
     #[arg(short, long)]
@@ -95,5 +95,4 @@ pub struct CommandLineArgs {
     /// Groups or nodes for the iteration
     #[arg()]
     pub(crate) items: Vec<String>,
-
 }

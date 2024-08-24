@@ -44,15 +44,21 @@ fn main() {
         nodes = unified_node_list(args.items);
     }
 
-    if (args.command != "") != (args.recipe != "") {
+    if (args.command != "") != (args.recipe != ""){
         let execution_lines: Vec<String> =
             utils::get_execution_lines(&args.command, &args.recipe);
 
         if args.execute_local {
-            exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines));
+            exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, args.optssh));
         } else {
-            exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines));
+            exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines, args.optssh));
         }
+    }
+
+    if args.login {
+        let mut execution_lines: Vec<String> = Vec::new();
+        execution_lines.push(format!("ssh {} HOST", args.optssh));
+        exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines,args.optssh));
     }
 
     let mut cmd = CommandLineArgs::command();
