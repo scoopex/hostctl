@@ -42,7 +42,6 @@ pub fn output_str(msg: &str, level: OutputType) {
     output(msg.to_string(), level);
 }
 
-
 pub fn dump_recipe_dir(recipe_dir: String){
     let mut header = false;
     let path = Path::new(recipe_dir.as_str());
