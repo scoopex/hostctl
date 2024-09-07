@@ -29,11 +29,11 @@ pub fn output(msg: String, level: OutputType) {
     if level == OutputType::Fatal {
         println!("{color_red}{msg}{color_reset}");
         exit(1);
-    }else if level == OutputType::Info {
+    } else if level == OutputType::Info {
         println!("{color_green}{msg}{color_reset}")
-    }else if level == OutputType::Debug {
+    } else if level == OutputType::Debug {
         println!("{color_yellow}{msg}{color_reset}")
-    }else{
+    } else {
         println!("{color_red}{msg}{color_reset}")
     }
 }
@@ -42,7 +42,7 @@ pub fn output_str(msg: &str, level: OutputType) {
     output(msg.to_string(), level);
 }
 
-pub fn dump_recipe_dir(recipe_dir: String){
+pub fn dump_recipe_dir(recipe_dir: String) {
     let mut header = false;
     let path = Path::new(recipe_dir.as_str());
 
@@ -92,8 +92,7 @@ pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
     let mut raw_execution_lines: Vec<String> = Vec::new();
     if command != "" {
         raw_execution_lines.push(format!("{command}\n"));
-    }
-    else if recipe != "" {
+    } else if recipe != "" {
         let recipe_files = [
             format!("{}/.hostctl/{}", env!("HOME"), recipe),
             format!("{}/recipe/{}", env!("PWD"), recipe),
@@ -101,14 +100,14 @@ pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
         ];
         for recipe_file in &recipe_files {
             if let Ok(lines) = read_lines(recipe_file) {
-                    for line in lines {
-                        raw_execution_lines.push(line.unwrap().clone());
-                    }
-                    break;
+                for line in lines {
+                    raw_execution_lines.push(line.unwrap().clone());
                 }
+                break;
+            }
         }
         if raw_execution_lines.len() == 0 {
-            output("Did not found a recipe or recipe was empty".to_string(),OutputType::Fatal);
+            output("Did not found a recipe or recipe was empty".to_string(), OutputType::Fatal);
         }
     }
 
@@ -116,8 +115,8 @@ pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
 }
 
 pub(crate) fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<fs::File>>>
-    where
-        P: AsRef<std::path::Path>,
+where
+    P: AsRef<std::path::Path>,
 {
     let file = fs::File::open(filename)?;
     Ok(io::BufReader::new(file).lines())

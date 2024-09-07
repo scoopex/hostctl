@@ -47,7 +47,7 @@ fn main() {
         nodes = unified_node_list(commandline_args.items.clone());
     }
 
-    if (commandline_args.command != "") != (commandline_args.recipe != ""){
+    if (commandline_args.command != "") != (commandline_args.recipe != "") {
         let execution_lines: Vec<String> =
             utils::get_execution_lines(&commandline_args.command, &commandline_args.recipe);
 
@@ -67,6 +67,5 @@ fn main() {
     let mut cmd = CommandLineArgs::command();
     cmd.print_help().expect("Failed to print help");
     dump_recipes();
-
 }
 

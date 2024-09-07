@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use crate::utils;
 
-pub fn dump_batch_mode(items: Vec<String>){
+pub fn dump_batch_mode(items: Vec<String>) {
     let sorted_vec = unified_node_list(items);
     println!("{}", sorted_vec.join(" "));
 }
@@ -21,12 +21,12 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
     sorted_vec
 }
 
-pub fn dump_groups(items: Vec<String>, json: bool)  {
+pub fn dump_groups(items: Vec<String>, json: bool) {
     let groups_map = read_configs(items);
     if json {
         let json_string = serde_json::to_string_pretty(&groups_map).unwrap();
         println!("{}", json_string);
-    }else{
+    } else {
         for (group_name, nodes) in groups_map.iter() {
             println!("{}: {}", group_name, nodes.join(", "));
         }
@@ -40,7 +40,7 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
     ];
 
     let mut select_all = false;
-    if items.contains(&"all".to_string()){
+    if items.contains(&"all".to_string()) {
         select_all = true;
     }
 
@@ -61,7 +61,6 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
                             let group = groups_map.entry(group_name.to_string()).or_insert(Vec::new());
                             group.extend(nodes);
                         }
-
                     }
                 }
             }

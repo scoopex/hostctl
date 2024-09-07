@@ -31,7 +31,7 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
 
     let status = child.wait().expect("Failed to wait for script");
     if !status.success() {
-        output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()),OutputType::Error);
+        output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()), OutputType::Error);
         return false;
     }
     output("\nSUCCESS\n".to_string(), OutputType::Info);
@@ -39,7 +39,6 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
 }
 
 fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: String) -> bool {
-
     for (nr, line) in templated_lines.iter().enumerate() {
         output(format!("#{nr}: {line}"), OutputType::Debug);
     }
@@ -47,7 +46,7 @@ fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: Strin
     let mut cmd = Command::new("ssh");
     if ssh_options != "" {
         output(format!("Adding extra ssh options >>>{}<<<", ssh_options), OutputType::Debug);
-        for ssh_opt in ssh_options.split_whitespace(){
+        for ssh_opt in ssh_options.split_whitespace() {
             cmd.arg(ssh_opt.to_string());
         }
     }
@@ -73,13 +72,12 @@ fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: Strin
 
     let status = child.wait().expect("Failed to wait for script");
     if !status.success() {
-        output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()),OutputType::Error);
+        output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()), OutputType::Error);
         return false;
     }
     output("\nSUCCESS\n".to_string(), OutputType::Info);
     true
 }
-
 
 
 pub fn execute_node(node: String, iter_information: String, local_execution: bool, execution_lines: &Vec<String>, ssh_options: String) -> bool {
@@ -93,7 +91,7 @@ pub fn execute_node(node: String, iter_information: String, local_execution: boo
 
     if local_execution {
         execute_local(templated_lines)
-    }else{
+    } else {
         execute_remote(node, templated_lines, ssh_options)
     }
 }
@@ -108,7 +106,7 @@ fn template_lines(execution_lines: &Vec<String>, node: &String) -> Vec<String> {
 
 
 pub fn prompt() -> &'static str {
-    // TODO: Implement Edit 
+    // TODO: Implement Edit
     let options: Vec<&str> = vec!["Continue", "Retry", "Shell", "Quit"];
 
     let ans: Result<&str, InquireError> = Select::new("What to you want to do?", options).prompt();
@@ -116,7 +114,7 @@ pub fn prompt() -> &'static str {
     ans.unwrap_or_else(|_| "ERROR")
 }
 
-pub fn get_shell(node: String, args: &CommandLineArgs){
+pub fn get_shell(node: String, args: &CommandLineArgs) {
     let mut execution_lines: Vec<String> = Vec::new();
     execution_lines.push(format!("ssh HOST"));
     execute_node(node, "Shell".to_string(), true, &execution_lines, args.optssh.clone());
@@ -152,13 +150,13 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
                 if args.prompt {
                     let prompt_result = prompt();
                     match prompt_result {
-                        "Continue" => { break 'outer; },
-                        "Shell" => {get_shell(node.clone(), &args)},
-                        "Retry" => {break 'inner;}
-                        "Quit" => {break 'node_loop;}
+                        "Continue" => { break 'outer; }
+                        "Shell" => { get_shell(node.clone(), &args) }
+                        "Retry" => { break 'inner; }
+                        "Quit" => { break 'node_loop; }
                         _ => {
                             output_str("Interrupted from choice", OutputType::Fatal);
-                        },
+                        }
                     }
                 } else {
                     break 'outer;
@@ -169,7 +167,7 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
     if failed_nodes.len() > 0 {
         let failed_nodes_str = failed_nodes.join(", ");
         output(format!("\n\nCOMPLETED  - ONE OR MORE NODES FAILED!\n\nFAILED NODES: {failed_nodes_str}"), OutputType::Error);
-    }else{
+    } else {
         output_str("\n\nCOMPLETED - ALL NODES WERE SUCCESSFUL", OutputType::Info);
     }
     failed_nodes.len() as i32

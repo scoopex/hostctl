@@ -3,7 +3,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(author, version,
-about = "convenient management and execution of command on groups of hosts",
+    about = "convenient management and execution of command on groups of hosts",
 )]
 pub struct CommandLineArgs {
     /// Command to execute. A ssh login is performed on the specified hosts and the specified
@@ -25,15 +25,15 @@ pub struct CommandLineArgs {
     pub(crate) recipe: String,
 
     /// Specify hosts instead of groups.
-    #[arg(short, long,)]
+    #[arg(short, long, )]
     pub(crate) nodes: bool,
 
     /// show group(s)
-    #[arg(short, long )]
+    #[arg(short, long)]
     pub(crate) show: bool,
 
     /// output json format
-    #[arg(short, long )]
+    #[arg(short, long)]
     pub(crate) json: bool,
 
     /// debug mode
@@ -62,7 +62,7 @@ pub struct CommandLineArgs {
     pub(crate) inscreen: String,
 
     /// Add the arguments to the ssh command.
-    #[arg(short, long, default_value= "")]
+    #[arg(short, long, default_value = "")]
     pub(crate) optssh: String,
 
     // login to each host
