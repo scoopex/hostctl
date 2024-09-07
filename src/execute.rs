@@ -15,8 +15,7 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
         .expect("Unable to create temporary file");
 
     for (nr, line) in templated_lines.iter().enumerate() {
-        output(format!("#{nr}: {line}"), OutputType::Debug);
-        writeln!(temp_file, "{}", line).expect("Unable to write file");
+        writeln!(temp_file, "{}", line).expect(format!("Unable to write file in line {}", nr).as_str());
     }
     let temp_file_path = temp_file.path().to_str();
 
@@ -39,13 +38,10 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
 }
 
 fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: String) -> bool {
-    for (nr, line) in templated_lines.iter().enumerate() {
-        output(format!("#{nr}: {line}"), OutputType::Debug);
-    }
 
     let mut cmd = Command::new("ssh");
     if ssh_options != "" {
-        output(format!("Adding extra ssh options >>>{}<<<", ssh_options), OutputType::Debug);
+        output(format!("Adding extra ssh options >>>{}<<<", ssh_options), OutputType::Detail);
         for ssh_opt in ssh_options.split_whitespace() {
             cmd.arg(ssh_opt.to_string());
         }
@@ -79,20 +75,50 @@ fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: Strin
     true
 }
 
+#[derive(Debug, PartialEq)]
+pub enum NodeResult {
+    Ok,
+    Failed,
+    Skipped,
+    Quit,
+}
 
-pub fn execute_node(node: String, iter_information: String, local_execution: bool, execution_lines: &Vec<String>, ssh_options: String) -> bool {
+pub fn execute_node(node: String, iter_information: String, local_execution: bool, execution_lines: &Vec<String>, args: &CommandLineArgs) -> NodeResult {
     let mut output_text: String = format!("*** HOST: {node} {iter_information}\n");
     if local_execution {
         output_text = format!("*** LOCAL: {node} {iter_information}\n");
     }
     output(output_text, OutputType::Info);
+
     let templated_lines = template_lines(execution_lines, &node);
 
+    for (nr, line) in templated_lines.iter().enumerate() {
+        output(format!("#{nr}: {line}"), OutputType::Detail);
+    }
 
+    if args.makeselection {
+        match prompt_before() {
+            "Execute" => {},
+            "Skip" => { return NodeResult::Skipped },
+            "Quit" => { return NodeResult::Quit },
+            _ => {
+                output_str("Interrupted from choice", OutputType::Fatal);
+            }
+        }
+    }
+    println!();
+
+    let res: bool;
     if local_execution {
-        execute_local(templated_lines)
+        res = execute_local(templated_lines);
     } else {
-        execute_remote(node, templated_lines, ssh_options)
+        res = execute_remote(node, templated_lines, args.optssh.clone());
+    }
+
+    if res {
+        NodeResult::Ok
+    }else{
+        NodeResult::Failed
     }
 }
 
@@ -104,20 +130,22 @@ fn template_lines(execution_lines: &Vec<String>, node: &String) -> Vec<String> {
     templated_commands
 }
 
-
-pub fn prompt() -> &'static str {
-    // TODO: Implement Edit
-    let options: Vec<&str> = vec!["Continue", "Retry", "Shell", "Quit"];
-
+pub fn prompt_before() -> &'static str {
+    let options = vec!["Execute", "Skip", "Quit"];
     let ans: Result<&str, InquireError> = Select::new("What to you want to do?", options).prompt();
+    ans.unwrap_or_else(|_| "ERROR")
+}
 
+pub fn prompt_after() -> &'static str {
+    let options = vec!["Continue", "Retry", "Shell", "Quit"];
+    let ans: Result<&str, InquireError> = Select::new("What to you want to do?", options).prompt();
     ans.unwrap_or_else(|_| "ERROR")
 }
 
 pub fn get_shell(node: String, args: &CommandLineArgs) {
     let mut execution_lines: Vec<String> = Vec::new();
     execution_lines.push(format!("ssh HOST"));
-    execute_node(node, "Shell".to_string(), true, &execution_lines, args.optssh.clone());
+    execute_node(node, "Shell".to_string(), true, &execution_lines, args);
 }
 
 pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, execution_lines: &Vec<String>, args: CommandLineArgs) -> i32 {
@@ -138,9 +166,14 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             let membership_info = "Nodes";
             iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
         }
+
         'outer: loop {
-            if !execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, args.optssh.clone()) {
-                failed_nodes.push(node.clone())
+            let res = execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, &args);
+
+            match res {
+                NodeResult::Failed => { failed_nodes.push(node.clone());},
+                NodeResult::Quit => {failed_nodes.push(node.clone()); break 'node_loop},
+                _ => {}
             }
             if args.wait > 0 {
                 output(format!("\nWaiting for {} seconds before continue\n", args.wait), OutputType::Info);
@@ -148,8 +181,8 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             }
             'inner: loop {
                 if args.prompt {
-                    let prompt_result = prompt();
-                    match prompt_result {
+                    // TODO: implement edit
+                    match prompt_after() {
                         "Continue" => { break 'outer; }
                         "Shell" => { get_shell(node.clone(), &args) }
                         "Retry" => { break 'inner; }

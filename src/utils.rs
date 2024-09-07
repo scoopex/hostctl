@@ -21,7 +21,7 @@ use inline_colorization::color_reset;
 pub enum OutputType {
     Info,
     Error,
-    Debug,
+    Detail,
     Fatal,
 }
 
@@ -31,7 +31,7 @@ pub fn output(msg: String, level: OutputType) {
         exit(1);
     } else if level == OutputType::Info {
         println!("{color_green}{msg}{color_reset}")
-    } else if level == OutputType::Debug {
+    } else if level == OutputType::Detail {
         println!("{color_yellow}{msg}{color_reset}")
     } else {
         println!("{color_red}{msg}{color_reset}")
