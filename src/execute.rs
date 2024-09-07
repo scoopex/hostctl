@@ -6,6 +6,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
+use inquire::{InquireError, Select};
 use tempfile::NamedTempFile;
 use crate::parameters::CommandLineArgs;
 
@@ -45,10 +46,10 @@ fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: Strin
 
     let mut cmd = Command::new("ssh");
     if ssh_options != "" {
-        output(format!("Adding extra ssh options {}", ssh_options), OutputType::Debug);
-        // for ssh_opt in ssh_options.split_whitespace(){
-        //     cmd.args(ssh_opt);
-        // }
+        output(format!("Adding extra ssh options >>>{}<<<", ssh_options), OutputType::Debug);
+        for ssh_opt in ssh_options.split_whitespace(){
+            cmd.arg(ssh_opt.to_string());
+        }
     }
     cmd.arg(node);
     cmd.arg("bash");
@@ -79,6 +80,8 @@ fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: Strin
     true
 }
 
+
+
 pub fn execute_node(node: String, iter_information: String, local_execution: bool, execution_lines: &Vec<String>, ssh_options: String) -> bool {
     let mut output_text: String = format!("*** HOST: {node} {iter_information}\n");
     if local_execution {
@@ -86,6 +89,7 @@ pub fn execute_node(node: String, iter_information: String, local_execution: boo
     }
     output(output_text, OutputType::Info);
     let templated_lines = template_lines(execution_lines, &node);
+
 
     if local_execution {
         execute_local(templated_lines)
@@ -102,6 +106,22 @@ fn template_lines(execution_lines: &Vec<String>, node: &String) -> Vec<String> {
     templated_commands
 }
 
+
+pub fn prompt() -> &'static str {
+    // TODO: Implement Edit 
+    let options: Vec<&str> = vec!["Continue", "Retry", "Shell", "Quit"];
+
+    let ans: Result<&str, InquireError> = Select::new("What to you want to do?", options).prompt();
+
+    ans.unwrap_or_else(|_| "ERROR")
+}
+
+pub fn get_shell(node: String, args: &CommandLineArgs){
+    let mut execution_lines: Vec<String> = Vec::new();
+    execution_lines.push(format!("ssh HOST"));
+    execute_node(node, "Shell".to_string(), true, &execution_lines, args.optssh.clone());
+}
+
 pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, execution_lines: &Vec<String>, args: CommandLineArgs) -> i32 {
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
@@ -111,7 +131,7 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
         output_str("EXIT: No nodes were specified", OutputType::Fatal);
     }
 
-    for node in nodes {
+    'node_loop: for node in nodes {
         number_of_current += 1;
         let iter_info: String;
         if only_nodes {
@@ -120,12 +140,30 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             let membership_info = "Nodes";
             iter_info = format!("({membership_info} [{number_of_current}/{number_of_nodes}])");
         }
-        if !execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, args.optssh.clone()){
-            failed_nodes.push(node)
-        }
-        if args.wait > 0 {
-            output(format!("\nWaiting for {} seconds before continue\n", args.wait), OutputType::Info);
-            thread::sleep(Duration::from_secs(args.wait));
+        'outer: loop {
+            if !execute_node(node.clone(), iter_info.to_string(), execute_local, &execution_lines, args.optssh.clone()) {
+                failed_nodes.push(node.clone())
+            }
+            if args.wait > 0 {
+                output(format!("\nWaiting for {} seconds before continue\n", args.wait), OutputType::Info);
+                thread::sleep(Duration::from_secs(args.wait));
+            }
+            'inner: loop {
+                if args.prompt {
+                    let prompt_result = prompt();
+                    match prompt_result {
+                        "Continue" => { break 'outer; },
+                        "Shell" => {get_shell(node.clone(), &args)},
+                        "Retry" => {break 'inner;}
+                        "Quit" => {break 'node_loop;}
+                        _ => {
+                            output_str("Interrupted from choice", OutputType::Fatal);
+                        },
+                    }
+                } else {
+                    break 'outer;
+                }
+            }
         }
     }
     if failed_nodes.len() > 0 {
