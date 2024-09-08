@@ -4,7 +4,7 @@ hostctl
 Convenient management and execution of comand on groups of hosts
 
 One day this tool will be replaced by Puppet Bolt (https://puppet.com/products/puppet-bolt).
-But unfortunately bolt currently lacks some interfactive features which ich need often.
+But unfortunately bolt currently lacks some interactive features which ich need often.
 
 # Install
 
