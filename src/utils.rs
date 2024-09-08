@@ -7,8 +7,7 @@ use inline_colorization::color_green;
 use inline_colorization::color_yellow;
 use inline_colorization::color_red;
 use inline_colorization::color_reset;
-
-
+use crate::parameters::CommandLineArgs;
 /*
 use inline_colorization::color_green;
 use inline_colorization::color_yellow;
@@ -88,15 +87,15 @@ pub fn dump_recipes() {
     }
 }
 
-pub fn get_execution_lines(command: &String, recipe: &String) -> Vec<String> {
+pub fn get_execution_lines(args: &CommandLineArgs) -> Vec<String> {
     let mut raw_execution_lines: Vec<String> = Vec::new();
-    if command != "" {
-        raw_execution_lines.push(format!("{command}\n"));
-    } else if recipe != "" {
+    if args.command != "" {
+        raw_execution_lines.push(format!("{}\n", args.command));
+    } else if args.recipe != "" {
         let recipe_files = [
-            format!("{}/.hostctl/{}", env!("HOME"), recipe),
-            format!("{}/recipe/{}", env!("PWD"), recipe),
-            format!("{}", recipe),
+            format!("{}/.hostctl/{}", env!("HOME"), args.recipe),
+            format!("{}/recipe/{}", env!("PWD"), args.recipe),
+            format!("{}", args.recipe),
         ];
         for recipe_file in &recipe_files {
             if let Ok(lines) = read_lines(recipe_file) {

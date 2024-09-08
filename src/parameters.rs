@@ -79,12 +79,12 @@ pub struct CommandLineArgs {
     #[arg(short, long, default_value = "0")]
     pub(crate) wait: u64,
 
-    /// ask after every execution, if hostctl should (c)ontinue, (r)etry, (s)hell, (q)uit, (e)dit
+    /// ask after every execution, if hostctl should continue, retry, execute a shell or quit
     #[arg(short, long)]
     pub(crate) prompt: bool,
 
     /// raise a prompt before each host which provides the possibility to
-    /// confirm, skip or quit execution
+    /// confirm or skip the host or quit execution
     #[arg(short, long)]
     pub(crate) makeselection: bool,
 

@@ -197,6 +197,10 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             }
         }
     }
+
+    failed_nodes.sort();
+    failed_nodes.dedup();
+
     if failed_nodes.len() > 0 {
         let failed_nodes_str = failed_nodes.join(", ");
         output(format!("\n\nCOMPLETED  - ONE OR MORE NODES FAILED!\n\nFAILED NODES: {failed_nodes_str}"), OutputType::Error);

@@ -49,7 +49,7 @@ fn main() {
 
     if (commandline_args.command != "") != (commandline_args.recipe != "") {
         let execution_lines: Vec<String> =
-            utils::get_execution_lines(&commandline_args.command, &commandline_args.recipe);
+            utils::get_execution_lines(&commandline_args);
 
         if commandline_args.execute_local {
             exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, commandline_args));
