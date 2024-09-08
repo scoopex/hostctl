@@ -7,7 +7,7 @@ use std::process::exit;
 use env_logger::Env;
 use clap::Parser;
 use clap::CommandFactory;
-use crate::groups_config::{dump_batch_mode, dump_groups, unified_node_list};
+use crate::groups_config::{dump_batch_list, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
 use crate::utils::{dump_recipes, output_str, OutputType};
 
@@ -32,8 +32,8 @@ fn main() {
         dump_groups(commandline_args.items, commandline_args.json);
         exit(0);
     }
-    if commandline_args.batchmode {
-        dump_batch_mode(commandline_args.items);
+    if commandline_args.array {
+        dump_batch_list(commandline_args.items);
         exit(0);
     }
 

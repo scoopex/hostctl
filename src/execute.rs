@@ -10,7 +10,41 @@ use inquire::{InquireError, Select};
 use tempfile::NamedTempFile;
 use crate::parameters::CommandLineArgs;
 
-fn execute_local(templated_lines: Vec<String>) -> bool {
+
+fn establish_base_command(args: &CommandLineArgs) -> Command {
+    let mut cmd;
+
+    // if (system('screen -ls '.$inscreen[0].' >/dev/null 2>&1') == 0){
+    //
+    // }
+    // system('screen -x '.$inscreen[0].' -m -X defscrollback 10000');
+    // system('screen -x '.$inscreen[0].' -m -X caption always "%3n %t%? @%u%?%? [%h]%?"');
+    // system('screen -x '.$inscreen[0].' -m -X caption string "%{.ck} %n %t %{.gk}"');
+    // system('screen -x '.$inscreen[0].' -m -X hardstatus alwayslastline');
+    // system('screen -x '.$inscreen[0].' -m -X hardstatus string "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"');
+    //
+    //
+    // if (defined $inscreen[0]){
+    //     out("NOTE: command were execute in a screen session, attach by executing 'screen -x ".$inscreen[0]."'\n", "warn");
+    //     out("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)\n", "warn");
+    // }
+
+    // if ($hosts_iter == 1){
+    //      $go = "screen -t ".$dhost." -S ".$inscreen[0]." -d -m $go"
+    // }else{
+    //      $go = "screen -x ".$inscreen[0]." -m -X screen -t ".$dhost." $go"
+    // }
+    //
+
+    if args.inscreen != "" {
+        cmd = Command::new("bash");
+    } else {
+        cmd = Command::new("bash");
+    }
+    cmd
+}
+
+fn execute_local(templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
     let mut temp_file = NamedTempFile::with_prefix("hostctl_")
         .expect("Unable to create temporary file");
 
@@ -19,7 +53,8 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
     }
     let temp_file_path = temp_file.path().to_str();
 
-    let mut cmd = Command::new("bash");
+    let mut cmd = establish_base_command(&args);
+
     cmd.arg(temp_file_path.unwrap().to_string());
 
     cmd.stdin(Stdio::inherit())
@@ -37,12 +72,22 @@ fn execute_local(templated_lines: Vec<String>) -> bool {
     true
 }
 
-fn execute_remote(node: String, templated_lines: Vec<String>, ssh_options: String) -> bool {
+fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
 
     let mut cmd = Command::new("ssh");
-    if ssh_options != "" {
-        output(format!("Adding extra ssh options >>>{}<<<", ssh_options), OutputType::Detail);
-        for ssh_opt in ssh_options.split_whitespace() {
+
+    if args.batchmode {
+        cmd.arg("-o");
+        cmd.arg("BatchMode=yes");
+    }
+
+    if args.term {
+        cmd.arg("-t");
+    }
+
+    if args.optssh != "" {
+        output(format!("Adding extra ssh options >>>{}<<<", args.optssh), OutputType::Detail);
+        for ssh_opt in args.optssh.split_whitespace() {
             cmd.arg(ssh_opt.to_string());
         }
     }
@@ -110,9 +155,9 @@ pub fn execute_node(node: String, iter_information: String, local_execution: boo
 
     let res: bool;
     if local_execution {
-        res = execute_local(templated_lines);
+        res = execute_local(templated_lines, args);
     } else {
-        res = execute_remote(node, templated_lines, args.optssh.clone());
+        res = execute_remote(node, templated_lines, args);
     }
 
     if res {
@@ -181,7 +226,7 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             }
             'inner: loop {
                 if args.prompt {
-                    // TODO: implement edit
+                    // TODO: implement edit, tranche, all
                     match prompt_after() {
                         "Continue" => { break 'outer; }
                         "Shell" => { get_shell(node.clone(), &args) }

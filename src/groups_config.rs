@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use crate::utils;
 
-pub fn dump_batch_mode(items: Vec<String>) {
+pub fn dump_batch_list(items: Vec<String>) {
     let sorted_vec = unified_node_list(items);
     println!("{}", sorted_vec.join(" "));
 }

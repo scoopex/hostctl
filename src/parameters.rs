@@ -32,7 +32,11 @@ pub struct CommandLineArgs {
     #[arg(short, long)]
     pub(crate) show: bool,
 
-    /// output json format
+    /// Output an array list od nodes
+    #[arg(short, long)]
+    pub(crate) array: bool,
+
+    /// output hosts in json format
     #[arg(short, long)]
     pub(crate) json: bool,
 
@@ -48,9 +52,6 @@ pub struct CommandLineArgs {
     #[arg(short, long)]
     pub(crate) quiet: bool,
 
-    ///
-    #[arg(short, long)]
-    pub(crate) array: bool,
 
     // batchmode, no password prompting (skip host if not ssh-key auth is possible)
     #[arg(short, long)]
