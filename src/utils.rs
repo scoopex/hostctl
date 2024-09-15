@@ -90,7 +90,7 @@ pub fn dump_recipes() {
 pub fn get_execution_lines(args: &CommandLineArgs) -> Vec<String> {
     let mut raw_execution_lines: Vec<String> = Vec::new();
     if args.command != "" {
-        raw_execution_lines.push(format!("{}\n", args.command));
+        raw_execution_lines.push(format!("{}", args.command));
     } else if args.recipe != "" {
         let recipe_files = [
             format!("{}/.hostctl/{}", env!("HOME"), args.recipe),
@@ -108,8 +108,11 @@ pub fn get_execution_lines(args: &CommandLineArgs) -> Vec<String> {
         if raw_execution_lines.len() == 0 {
             output("Did not found a recipe or recipe was empty".to_string(), OutputType::Fatal);
         }
-    }
 
+    }
+    if args.inscreen != "" {
+        raw_execution_lines.push("read -p 'PRESS ENTER TO EXIT'".to_string());
+    }
     raw_execution_lines
 }
 

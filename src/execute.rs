@@ -79,7 +79,7 @@ fn establish_base_command(args: &CommandLineArgs, base_executeable: &str, node: 
     static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
     if args.inscreen == "" {
-        Command::new(base_executeable);
+        return Command::new(base_executeable);
     }
 
     if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
@@ -100,7 +100,7 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
         .expect("Unable to create temporary file");
 
     for (nr, line) in templated_lines.iter().enumerate() {
-        writeln!(temp_file, "{}", line).expect(format!("Unable to write file in line {}", nr).as_str());
+        writeln!(temp_file, "{}\n", line).expect(format!("Unable to write file in line {}", nr).as_str());
     }
     let temp_file_path = temp_file.path().to_str();
 
@@ -108,6 +108,7 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
 
     cmd.arg(temp_file_path.unwrap().to_string());
 
+    println!("Executing {:?}", cmd);
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -132,7 +133,7 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
         cmd.arg("BatchMode=yes");
     }
 
-    if args.term {
+    if args.term || args.inscreen != "" {
         cmd.arg("-t");
     }
 
@@ -148,15 +149,17 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
 
     //cmd.arg(temp_file_path.unwrap().to_string());
 
+    println!("Executing {:?}", cmd);
     cmd.stdin(Stdio::piped())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
+
 
     let mut child = cmd.spawn().expect("Unable to start remote connection");
 
     if let Some(mut stdin) = child.stdin.take() {
         for line in templated_lines.iter() {
-            writeln!(stdin, "{}", line).expect("Failed to write to stdin");
+            writeln!(stdin, "{}\n", line).expect("Failed to write to stdin");
         }
     } else {
         eprintln!("Failed to open stdin");
