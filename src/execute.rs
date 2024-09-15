@@ -72,6 +72,7 @@ fn establish_screen(args: &CommandLineArgs){
         .output()
         .expect("failed to configure base screen");
 
+    output(format!("Base screen established >>>{}<<<", args.inscreen), OutputType::Detail)
 }
 fn establish_base_command(args: &CommandLineArgs, base_executeable: &str, node: &str) -> Command {
     let mut cmd;
