@@ -4,47 +4,97 @@ use crate::utils::OutputType;
 
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 use std::time::Duration;
 use inquire::{InquireError, Select};
+use regex::Regex;
 use tempfile::NamedTempFile;
 use crate::parameters::CommandLineArgs;
 
 
-fn establish_base_command(args: &CommandLineArgs) -> Command {
-    let mut cmd;
+fn check_screen(args: &CommandLineArgs) -> usize{
+    let cmd = Command::new("screen").args(["-ls", &*args.inscreen]).output().expect("Unable to execute screen");
+    let stdout = String::from_utf8_lossy(&cmd.stdout);
 
-    // if (system('screen -ls '.$inscreen[0].' >/dev/null 2>&1') == 0){
-    //
-    // }
-    // system('screen -x '.$inscreen[0].' -m -X defscrollback 10000');
-    // system('screen -x '.$inscreen[0].' -m -X caption always "%3n %t%? @%u%?%? [%h]%?"');
-    // system('screen -x '.$inscreen[0].' -m -X caption string "%{.ck} %n %t %{.gk}"');
-    // system('screen -x '.$inscreen[0].' -m -X hardstatus alwayslastline');
-    // system('screen -x '.$inscreen[0].' -m -X hardstatus string "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"');
-    //
-    //
-    // if (defined $inscreen[0]){
-    //     out("NOTE: command were execute in a screen session, attach by executing 'screen -x ".$inscreen[0]."'\n", "warn");
-    //     out("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)\n", "warn");
-    // }
+    let re = Regex::new(r"\s*\d+\..*\(.*\)\s*\(.*\)").unwrap();
+    stdout.lines()
+        .filter(|line| re.is_match(line))
+        .count()
+}
 
-    // if ($hosts_iter == 1){
-    //      $go = "screen -t ".$dhost." -S ".$inscreen[0]." -d -m $go"
-    // }else{
-    //      $go = "screen -x ".$inscreen[0]." -m -X screen -t ".$dhost." $go"
-    // }
-    //
-
-    if args.inscreen != "" {
-        cmd = Command::new("bash");
-    } else {
-        cmd = Command::new("bash");
+fn establish_screen(args: &CommandLineArgs){
+    for _num in 1..30{
+        match check_screen(args){
+            0 => {
+                Command::new("screen")
+                    .args(["-t", "init", "-S", &*args.inscreen, "-d", "-m", "sleep", "600"])
+                    .output()
+                    .expect("failed to start base screen");
+                println!("Wait for screen session");
+                thread::sleep(Duration::from_secs(1));
+            },
+            1 => {
+                thread::sleep(Duration::from_secs(1));
+                break;
+            },
+            _ => {
+                output(format!("FAILED: There more screen with the name >>>{}<<<", args.inscreen), OutputType::Fatal)
+            }
+        }
     }
+
+    if check_screen(args) != 1{
+        output(format!("FAILED: Failed to initialize a screen with name >>>{}<<<", args.inscreen), OutputType::Fatal)
+    }
+    Command::new("screen")
+        .args(["-x", &*args.inscreen, "-m","-X","defscrollback", "10000"])
+        .output()
+        .expect("failed to configure base screen");
+
+    Command::new("screen")
+        .args(["-x", &*args.inscreen, "-m","-X","caption", "always", "%3n %t%? @%u%?%? [%h]%?"])
+        .output()
+        .expect("failed to configure base screen");
+
+    Command::new("screen")
+        .args(["-x", &*args.inscreen, "-m","-X","caption", "string", "%{.ck} %n %t %{.gk}"])
+        .output()
+        .expect("failed to configure base screen");
+
+    Command::new("screen")
+        .args(["-x", &*args.inscreen, "-m","-X","hardstatus", "alwayslastline"])
+        .output()
+        .expect("failed to configure base screen");
+
+    Command::new("screen")
+        .args(["-x", &*args.inscreen, "-m","-X","hardstatus", "string", "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"])
+        .output()
+        .expect("failed to configure base screen");
+
+}
+fn establish_base_command(args: &CommandLineArgs, base_executeable: &str, node: &str) -> Command {
+    let mut cmd;
+    static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+    if args.inscreen == "" {
+        Command::new(base_executeable);
+    }
+
+    if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
+        establish_screen(args);
+    }
+
+    output(format!("NOTE: command were execute in a screen session, attach by executing 'screen -x {}'", args.inscreen), OutputType::Info);
+    output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)", OutputType::Info);
+
+    cmd = Command::new("screen");
+    cmd.args(["-x", &*args.inscreen, "-m", "-X", "screen", "-t", node]);
+    cmd.arg(base_executeable);
     cmd
 }
 
-fn execute_local(templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
+fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
     let mut temp_file = NamedTempFile::with_prefix("hostctl_")
         .expect("Unable to create temporary file");
 
@@ -53,7 +103,7 @@ fn execute_local(templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
     }
     let temp_file_path = temp_file.path().to_str();
 
-    let mut cmd = establish_base_command(&args);
+    let mut cmd = establish_base_command(&args, "bash", &node);
 
     cmd.arg(temp_file_path.unwrap().to_string());
 
@@ -74,7 +124,7 @@ fn execute_local(templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
 
 fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
 
-    let mut cmd = Command::new("ssh");
+    let mut cmd = establish_base_command(&args, "ssh", &node);
 
     if args.batchmode {
         cmd.arg("-o");
@@ -155,7 +205,7 @@ pub fn execute_node(node: String, iter_information: String, local_execution: boo
 
     let res: bool;
     if local_execution {
-        res = execute_local(templated_lines, args);
+        res = execute_local(node, templated_lines, args);
     } else {
         res = execute_remote(node, templated_lines, args);
     }
