@@ -35,4 +35,5 @@ jobs:
       uses: ncipollo/release-action@v1
       if: ${{ inputs.build-type == 'release' }}
       with:
-        artifacts: "hostctl-v${{ github.ref_name }}.tar.gz"
+        artifactErrorsFailBuild: true
+        artifacts: "hostctl-${{ github.ref_name }}.tar.gz"
