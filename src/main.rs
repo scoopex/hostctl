@@ -84,8 +84,13 @@ fn main() {
 
     if cli.login {
         let mut execution_lines: Vec<String> = Vec::new();
-        execution_lines.push(format!("ssh {} HOST", cli.optssh));
-        exit(execute::execute_nodes(nodes, only_nodes, true, &execution_lines, cli));
+        if cli.sudo {
+            execution_lines.push("sudo -i".to_string());
+        }else {
+            execution_lines.push("bash -i".to_string());
+        }
+        cli.term = true;
+        exit(execute::execute_nodes(nodes, only_nodes, false, &execution_lines, cli));
     }
 
     let mut cmd = CommandLineArgs::command();

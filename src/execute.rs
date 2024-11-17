@@ -32,7 +32,7 @@ fn establish_screen_session(args: &CommandLineArgs){
                     .args(["-t", "init", "-S", &*args.inscreen, "-d", "-m", "sleep", "120"])
                     .output()
                     .expect("failed to start base screen");
-                println!("Wait for screen session for {} seconds", num);
+                output(format!("Wait for screen session for {} seconds", num), OutputType::Error);
                 thread::sleep(Duration::from_secs(1));
             },
             1 => {
@@ -111,7 +111,7 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
 
     cmd.arg(temp_file_path.unwrap().to_string());
 
-    println!("Executing local: {:?}", cmd);
+    output(format!("Executing local: {:?}", cmd), OutputType::Detail);
 
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
@@ -170,27 +170,47 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
         }
     }
     cmd.arg(node.clone());
-    cmd.arg("bash -s");
+    if args.inscreen != "" {
+        if args.sudo {
+            cmd.arg("sudo bash -s");
+        }else{
+            cmd.arg("bash -s");
+        }
+    }else{
+        if args.sudo{
+            cmd.arg(format!("sudo bash -c '{}'", templated_lines.join("\n")));
+        }else{
+            cmd.arg(templated_lines.join("\n"));
+        }
+    }
 
-    println!("Executing remote: {:?}", cmd);
-    cmd.stdin(Stdio::piped())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit());
-
+    output(format!("Execute remote : {:?}", cmd), OutputType::Detail);
+    //output(format!("Execute remote : {:?}", cmd.to_string()), OutputType::Detail);
+    if args.term {
+        cmd.stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit());
+    }else {
+        cmd.stdin(Stdio::piped())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit());
+    }
 
     let mut child = cmd.spawn().expect("Unable to start remote connection");
 
-    if args.inscreen == "" {
-        if let Some(mut stdin) = child.stdin.take() {
-            for line in templated_lines.iter() {
-                writeln!(stdin, "{}\n", line).expect("Failed to write to stdin");
+    if !args.term {
+        if args.inscreen == "" {
+            if let Some(mut stdin) = child.stdin.take() {
+                for line in templated_lines.iter() {
+                    writeln!(stdin, "{}\n", line).expect("Failed to write to stdin");
+                }
+            } else {
+                output("Failed to open stdin".to_string(), OutputType::Fatal);
             }
         } else {
-            eprintln!("Failed to open stdin");
+            thread::sleep(Duration::from_secs(1));
+            send_screen_stdin(args.inscreen.clone(), node.clone(), templated_lines);
         }
-    }else{
-        thread::sleep(Duration::from_secs(1));
-        send_screen_stdin(args.inscreen.clone(), node.clone(), templated_lines);
     }
 
     let status = child.wait().expect("Failed to wait for script");

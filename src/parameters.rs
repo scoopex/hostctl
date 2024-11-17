@@ -1,9 +1,51 @@
 use clap::Parser;
 
-
 #[derive(Parser, Debug)]
 #[command(author, version,
     about = "convenient management and execution of command on groups of hosts",
+    after_help = r###"
+    EXAMPLES
+
+    Show disk usage on all systems which belong to group 'foobar'
+        "hostctl -c 'df -h' foobar"
+
+    Show disk usage on all systems which belong to group 'foobar', ask after
+    every node what to do next
+        "hostctl -p -c 'df -h' foobar"
+
+    Execute ncurses application 'top' on all systems which belong to group
+    'foobar' using a pseudo tty
+        "hostctl -t -c 'top' foobar"
+
+    Copy files using rsync to a remotehost by replacing the string HOST with the
+    current hostname of the systems
+        "hostctl -e -c 'rsync -avP /tmp/foo HOST:/tmp/bar' foobar"
+
+    Execute script/recipe 'apache_status' on all systems which belong to
+    group 'foobar' (shortcut or explictit path)
+        "hostctl -r apache_status foobar"
+        "hostctl -r /foo/bar/baz/apache_status foobar"
+
+    Login sequentially on all hosts which belong to group 'foobar'
+        "hostctl -l foobar"
+
+    Start a screen session with 'top' on all systems which belong to group
+    'foobar'
+        "hostctl -c 'top' --inscreen my-magic-screen foobar"
+        "screen -x my-magic-screen"
+
+    ENVIRONMENT VARIABLES
+
+    HOSTCTL_CONFIG
+        Define a alternate configuration location
+
+        Default search order: ~/.hostctl/hostctl.conf, <HOSTCTL BINARY DIRECTORY>/hostctl.conf
+
+    HOSTCTL_CONFIG_DYNAMIC_SCRIPT
+        Get additional group definitions by reading stdout of the given
+        script
+
+    "###
 )]
 pub struct CommandLineArgs {
     /// Command to execute. A ssh login is performed on the specified hosts and the specified
@@ -52,7 +94,6 @@ pub struct CommandLineArgs {
     #[arg(short, long)]
     pub(crate) quiet: bool,
 
-
     // batchmode, no password prompting (skip host if not ssh-key auth is possible)
     #[arg(short, long)]
     pub(crate) batchmode: bool,
@@ -70,6 +111,10 @@ pub struct CommandLineArgs {
     // (sleep 1 second after every login, use STRG+c to terminate iteration)
     #[arg(short, long)]
     pub(crate) login: bool,
+
+    // use sudo to gather root privileges
+    #[arg(long)]
+    pub(crate) sudo: bool,
 
     // Force pseudo-tty allocation
     // (typically needed for tools which use (ncurses-)text-menus)
