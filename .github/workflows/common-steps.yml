@@ -32,11 +32,11 @@ jobs:
         tar -czvf ../hostctl-v${{ github.ref_name }}.tar.gz hostctl
         tar tzvf ../hostctl-v${{ github.ref_name }}.tar.gz
     - name: Upload tarball as release asset
-      if: ${{ inputs.build-type == 'release' }}
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ inputs.build-type == 'release' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./hostctl-v${{ github.ref_name }}.tar.gz
