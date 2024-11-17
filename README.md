@@ -9,10 +9,8 @@ But unfortunately bolt currently lacks some interfactive features which ich need
 # Install
 
 Software prerequisites:
- * perl, libterm-readline-gnu-perl
+ * rustc
  * ssh
- * perl-doc (to see the manpage with "hostctl -h")
- * man
  * screen
 
 Install script:
@@ -20,17 +18,22 @@ Install script:
 On Ubuntu just do:
 ```
 INSTALLDIR="/opt/"
-cd $INSTALLDIR
+sudo apt-get install rustc ssh screen 
+cd ${INSTALLDIR?Installation Dir}
 git clone https://github.com/scoopex/hostctl.git hostctl
 cd hostctl
-sudo apt-get install perl perl-doc ssh man screen libterm-readline-gnu-perl
-ln -snf $INSTALLDIR/hostctl /usr/bin/hostctl
-echo "source $INSTALLDIR/misc/hostctl_bash_completion.sh" >> .bashrc
+cargo build --release
+ln -snf $INSTALLDIR/hostctl/target/release/hostctl /usr/local/bin/hostctl
+target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
+echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
+exec bash
 ```
 
 Configure your environments:
 
- * Use a the "ssh-agent" (pageant, for the insane windows users) on your desktop
+ * Use the "ssh-agent"
  * Activate ssh agent forwarding (openssh: ForwardAgent yes) on your desktop ssh client and all systems you want to use "hostctl"
  * Activate ssh agent-forwarding (openssh: AllowAgentForwarding yes, default value) on your ssh servers 
 
