@@ -21,7 +21,7 @@ jobs:
       - name: Build project
         run: cargo build --release
 
-      - name: Create Release files
+      - name: Create shell completions
         run: |
           echo "Running additional commands..."
 					target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
