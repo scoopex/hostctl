@@ -35,5 +35,5 @@ jobs:
       uses: actions/upload-artifact@v4
       if: ${{ inputs.build-type == 'release' }}
       with:
-        name: ./hostctl-v${{ github.ref_name }}.tar.gz
+        name: release-v${{ github.ref_name }}
         path: hostctl-v${{ github.ref_name }}.tar.gz
