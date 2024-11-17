@@ -1,0 +1,12 @@
+name: Release Tarball
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger only on version tags (e.g., v1.0.0)
+
+jobs:
+  release:
+    uses: ./.github/workflows/common-steps.yml # Reference reusable workflow
+    with:
+      build-type: release

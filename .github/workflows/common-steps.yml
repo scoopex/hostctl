@@ -1,0 +1,39 @@
+name: Common Steps
+
+on:
+  workflow_call: # Enables this workflow to be called by others
+    inputs:
+      build-type:
+        description: "Type of build (e.g., debug, release)"
+        type: string
+        required: true
+
+jobs:
+  common-steps:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable # or specify the desired version
+    - name: Build project
+      run: cargo build --release
+    - name: Package tarball
+      run: |
+        mkdir -p release release/misc
+        cp target/release/hostctl release/
+        cp -av recipe release/recipe/
+        target/release/hostctl generate-completions bash > release/misc/hostctl_bash_completion.sh
+        target/release/hostctl generate-completions zsh > release/misc/hostctl_zsh_completion.sh
+        target/release/hostctl generate-completions fish > release/misc/hostctl_fish_completion.sh
+        tar -czvf hostctl-v${{ github.ref_name }}.tar.gz release
+    - name: Upload tarball as release asset
+      if: ${{ inputs.build-type == 'release' }}
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./hostctl-v${{ github.ref_name }}.tar.gz
+        asset_name: hostctl-v${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip
