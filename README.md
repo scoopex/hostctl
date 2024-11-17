@@ -1,10 +1,9 @@
-hostctl
+hostctl - A ssh loop on steroids
 ===========
 
-Convenient management and execution of comand on groups of hosts
-
-One day this tool will be replaced by Puppet Bolt (https://puppet.com/products/puppet-bolt).
-But unfortunately bolt currently lacks some interfactive features which ich need often.
+Convenient management and execution of command on groups of hosts : *A ssh loop on sterioids*
+I created this tool more than one decade ago, because existing tools suck.
+(Cluster Shell, Bolt, ... and probably because of NIH)
 
 # Install
 
@@ -34,8 +33,10 @@ exec bash
 Configure your environments:
 
  * Use the "ssh-agent"
- * Activate ssh agent forwarding (openssh: ForwardAgent yes) on your desktop ssh client and all systems you want to use "hostctl"
- * Activate ssh agent-forwarding (openssh: AllowAgentForwarding yes, default value) on your ssh servers 
+ * Activate ssh agent forwarding (openssh: `ForwardAgent yes`) on your desktop  
+   ssh client and all systems you want to use "hostctl"
+ * Activate ssh agent-forwarding (openssh: `AllowAgentForwarding yes`, this should be the default value)
+   on your ssh servers 
 
 # Usage
 
