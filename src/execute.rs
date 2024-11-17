@@ -24,18 +24,19 @@ fn check_screen(args: &CommandLineArgs) -> usize{
 }
 
 fn establish_screen_session(args: &CommandLineArgs){
-    for _num in 1..30{
+    let max_wait = 30;
+    for num in 1..max_wait{
         match check_screen(args){
             0 => {
                 Command::new("screen")
-                    .args(["-t", "init", "-S", &*args.inscreen, "-d", "-m", "sleep", "600"])
+                    .args(["-t", "init", "-S", &*args.inscreen, "-d", "-m", "sleep", "120"])
                     .output()
                     .expect("failed to start base screen");
-                println!("Wait for screen session");
+                println!("Wait for screen session for {} seconds", num);
                 thread::sleep(Duration::from_secs(1));
             },
             1 => {
-                if _num == 1 {
+                if num == 1 {
                     output(format!("FAILED: There already a screen with the name >>>{}<<<", args.inscreen), OutputType::Fatal)
                 }
                 thread::sleep(Duration::from_secs(1));
@@ -88,13 +89,6 @@ fn establish_base_command(args: &CommandLineArgs, base_executable: &str, node: &
     if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
         establish_screen_session(args);
     }
-
-    // TODO: Close the window with the title "init"
-    // Command::new("screen")
-    //     .args(["-x", &*args.inscreen, "-m","-X","hardstatus", "string", "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"])
-    //     .output()
-    //     .expect("failed to configure base screen");
-
     output(format!("NOTE: command were execute in a screen session, attach by executing 'screen -x {}'", args.inscreen), OutputType::Info);
     output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sessions)", OutputType::Info);
 
@@ -134,29 +128,26 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
     true
 }
 
-fn send_screen_stdin(screen: String, node: String, line: String, line_nr: usize) -> bool{
-    let the_line = format!("{}^M", line);
-    let cmd_args = ["-S", &*screen,"-p", &*node,"-X", "stuff", the_line.as_str()];
-    //println!("send: {:?}", cmd_args);
-    let result = Command::new("screen")
-        .args( cmd_args)
-        .stderr(Stdio::inherit()) // Print any error messages to the console
-        .output(); // Run the command and capture the output
+fn send_screen_stdin(screen: String, node: String, templated_lines: Vec<String>){
+    let mut temp_file = NamedTempFile::with_prefix("hostctl_")
+        .expect("Unable to create temporary file");
 
-    match result {
-        Ok(cmd_output) => {
-            if cmd_output.status.success() {
-                true
-            } else {
-                output(format!("FAILED IN LINE  {} : {}\n", line_nr, cmd_output.status), OutputType::Error);
-                false
-            }
-        }
-        Err(e) => {
-            output(format!("FAILED IN LINE {} : {}\n", line_nr, e), OutputType::Error);
-            false
-        }
+    for (nr, line) in templated_lines.iter().enumerate() {
+        writeln!(temp_file, "{}\n", line).expect(format!("Unable to write file in line {}", nr).as_str());
     }
+    let temp_file_path = temp_file.path().to_str();
+
+    // read the contents from the temporary file
+    Command::new("screen")
+        .args(["-S", &*screen,"-p", &*node,"-X", "readbuf", temp_file_path.unwrap()])
+        .output()
+        .expect(&format!("failed to do a readbuf on file {} for node", temp_file_path.unwrap()).as_str());
+
+    // paste the buffer
+    Command::new("screen")
+        .args(["-S", &*screen,"-p", &*node,"-X", "paste", "."])
+        .output()
+        .expect("failed to paste the commands");
 }
 
 fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
@@ -199,12 +190,7 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
         }
     }else{
         thread::sleep(Duration::from_secs(1));
-        for (nr, line) in templated_lines.iter().enumerate() {
-            let res = send_screen_stdin(args.inscreen.clone(), node.clone(), line.clone(), nr);
-            if !res{
-                false;
-            }
-        }
+        send_screen_stdin(args.inscreen.clone(), node.clone(), templated_lines);
     }
 
     let status = child.wait().expect("Failed to wait for script");
