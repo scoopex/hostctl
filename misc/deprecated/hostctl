@@ -79,8 +79,10 @@ my @executelocal = ();
 my @recipe = ();
 my @inscreen = ();
 my @optssh = ();
+my $terminate_loop = 0;
 my $makeselection = undef;
 my ($tmpfh, $tmpfilename);
+my @tmpfilename_list = ();
 
 
 #################################################################################
@@ -141,6 +143,16 @@ sub usage(){
   exit(1);
 }
 
+sub cleanup_tmp_files(){
+    if (@tmpfilename_list > 0){
+        foreach $tmpfilename(@tmpfilename_list){
+            if (-f $tmpfilename){
+                out("deleting stale tmpfile : ".$tmpfilename."\n", "warn");
+                unlink($tmpfilename);
+            }
+        }
+    }
+}
 
 sub out($$){
    my ($text,$type) = @_;
@@ -289,6 +301,7 @@ sub get_recipe($) {
 ###
 ### MAIN
 
+
 # Abfragen der Komandozeilenparameter
 my $rgetopt = GetOptions(
     'array'          => \$array,
@@ -380,6 +393,18 @@ if ((defined $inscreen[0]) && (system('screen -ls '.$inscreen[0].' >/dev/null 2>
     exit(1);
 }
 
+$SIG{INT} = sub {
+    out("terminated by CTRL-c", "error");
+    cleanup_tmp_files();
+    exit 1;
+};
+$SIG{TERM} = sub {
+    out("terminated by SIGTERM", "error");
+    cleanup_tmp_files();
+    exit 1;
+};
+
+
 ## LOOP OVER HOSTS
 ##
 ## DO NOT LAUGH ABOUT THE USE OF GOTOS :-)
@@ -439,11 +464,10 @@ foreach my $dhost (sort(keys(%target_hosts))) {
       if (defined $inscreen[0]){
          # Create a temporary file to tweak execution of a recipe in screen
          ($tmpfh, $tmpfilename) = tempfile("hostctl-tmpfileXXXXX", DIR => "/tmp");
+         push(@tmpfilename_list, $tmpfilename);
          print $tmpfh $go."\n";
          print $tmpfh "read -p 'PRESS ENTER TO EXIT'\n";
          close($tmpfh);
-         $SIG{INT} = sub { unlink($tmpfilename) };
-         $SIG{TERM} = sub { unlink($tmpfilename) };
          print $tmpfilename."\n";
          $go = "bash ".$tmpfilename;
       }
@@ -455,10 +479,12 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    # Execute a specified command
    }elsif(defined $cmd){
      ($tmpfh, $tmpfilename) = tempfile("hostctl-tmpfileXXXXX", DIR => "/tmp");
+     push(@tmpfilename_list, $tmpfilename);
      print $tmpfh $cmd."\n";
      close($tmpfh);
      $go = "ssh ".$ssh_opts."-o StrictHostKeyChecking=no $dhost 'bash -s' < ".$tmpfilename;
    }
+
 
    if (defined $debug){
      out("*" x 80 .  "\n", "ok");
@@ -481,6 +507,12 @@ foreach my $dhost (sort(keys(%target_hosts))) {
    EXECUTE:
 
    my $exitcode = system($go);
+
+   if ((defined $tmpfilename) && (-f $tmpfilename)){
+      unlink($tmpfilename);
+   }
+
+
    my $exittext = "0";
 
    # Create informational message about exit-message
@@ -563,9 +595,8 @@ if (defined $inscreen[0]){
    out("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)\n", "warn");
 }
 
-if ((defined $tmpfilename) && (-f $tmpfilename)){
-   unlink($tmpfilename);
-}
+cleanup_tmp_files();
+
 
 out("SUCESSFUL HOSTS (".scalar(@hosts_success)." of ".scalar(keys %target_hosts).") : ".join(", ",@hosts_success)."\n","ok");
 if (@hosts_failed > 0){
@@ -579,7 +610,7 @@ __END__
 
 =head1 NAME
 
-hostctl - convenient management and execution of comand on groups of hosts
+hostctl - convenient management and execution of command on groups of hosts
 
 =head1 SYNOPSIS
 
