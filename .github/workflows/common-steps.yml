@@ -22,14 +22,15 @@ jobs:
       run: cargo build --release
     - name: Package tarball
       run: |
-        mkdir -p release release/misc
-        cp target/release/hostctl release/
-        cp -av recipe release/recipe/
-        target/release/hostctl generate-completions bash > release/misc/hostctl_bash_completion.sh
-        target/release/hostctl generate-completions zsh > release/misc/hostctl_zsh_completion.sh
-        target/release/hostctl generate-completions fish > release/misc/hostctl_fish_completion.sh
-        tar -czvf hostctl-v${{ github.ref_name }}.tar.gz release
-        tar tzvf hostctl-v${{ github.ref_name }}.tar.gz
+        mkdir -p release/hostctl release/hostctl/misc
+        cp target/release/hostctl release/hostctl/
+        cp -av recipe release/hostctl/recipe/
+        target/release/hostctl generate-completions bash > release/hostctl/misc/hostctl_bash_completion.sh
+        target/release/hostctl generate-completions zsh > release/hostctl/misc/hostctl_zsh_completion.sh
+        target/release/hostctl generate-completions fish > release/hostctl/misc/hostctl_fish_completion.sh
+        cd release
+        tar -czvf ../hostctl-v${{ github.ref_name }}.tar.gz hostctl
+        tar tzvf ../hostctl-v${{ github.ref_name }}.tar.gz
     - name: Upload tarball as release asset
       if: ${{ inputs.build-type == 'release' }}
       uses: actions/upload-release-asset@v1
