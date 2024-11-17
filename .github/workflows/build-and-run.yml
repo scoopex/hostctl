@@ -12,18 +12,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable # or specify the desired version
-
       - name: Build project
         run: cargo build --release
-
       - name: Create shell completions
         run: |
           echo "Running additional commands..."
-					target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
-					target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
-					target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
+          target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+          target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+          target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
