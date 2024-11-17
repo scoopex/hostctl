@@ -1,0 +1,12 @@
+name: Build and Run Project
+
+on:
+  push:
+    branches:
+      - '**' # Run on commits to any branch
+
+jobs:
+  build-and-run:
+      uses: ./.github/workflows/common-steps.yml # Reference reusable workflow
+      with:
+        build-type: test

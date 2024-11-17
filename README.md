@@ -1,18 +1,15 @@
-hostctl
+hostctl - A ssh loop on steroids
 ===========
 
-Convenient management and execution of comand on groups of hosts
-
-One day this tool will be replaced by Puppet Bolt (https://puppet.com/products/puppet-bolt).
-But unfortunately bolt currently lacks some interactive features which ich need often.
+Convenient management and execution of command on groups of hosts : *A ssh loop on sterioids*
+I created this tool more than one decade ago, because existing tools suck.
+(Cluster Shell, Bolt, ... and probably because of NIH)
 
 # Install
 
 Software prerequisites:
- * perl, libterm-readline-gnu-perl
+ * rustc
  * ssh
- * perl-doc (to see the manpage with "hostctl -h")
- * man
  * screen
 
 Install script:
@@ -20,19 +17,26 @@ Install script:
 On Ubuntu just do:
 ```
 INSTALLDIR="/opt/"
-cd $INSTALLDIR
+sudo apt-get install rustc ssh screen 
+cd ${INSTALLDIR?Installation Dir}
 git clone https://github.com/scoopex/hostctl.git hostctl
 cd hostctl
-sudo apt-get install perl perl-doc ssh man screen libterm-readline-gnu-perl
-ln -snf $INSTALLDIR/hostctl /usr/bin/hostctl
-echo "source $INSTALLDIR/misc/hostctl_bash_completion.sh" >> .bashrc
+cargo build --release
+ln -snf $INSTALLDIR/hostctl/target/release/hostctl /usr/local/bin/hostctl
+target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
+echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
+exec bash
 ```
 
 Configure your environments:
 
- * Use a the "ssh-agent" (pageant, for the insane windows users) on your desktop
- * Activate ssh agent forwarding (openssh: ForwardAgent yes) on your desktop ssh client and all systems you want to use "hostctl"
- * Activate ssh agent-forwarding (openssh: AllowAgentForwarding yes, default value) on your ssh servers 
+ * Use the "ssh-agent"
+ * Activate ssh agent forwarding (openssh: `ForwardAgent yes`) on your desktop  
+   ssh client and all systems you want to use "hostctl"
+ * Activate ssh agent-forwarding (openssh: `AllowAgentForwarding yes`, this should be the default value)
+   on your ssh servers 
 
 # Usage
 
@@ -192,23 +196,26 @@ foobar-l01-(ap|db)\d+ : db1 :  foobar-l01-db01, foobar-l01-db02, foobar-l01-db03
 jump-barfoo : web2 :  barfoo-l01-ap01, barfoo-l01-ap02, barfoo-l01-ap03, barfoo-l01-ap04, barfoo-l01-ap05, barfoo-l01-ap06
 jump-barfoo : db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
 ```
-   
+
  * Hostgroup web1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
  * Hostgroup db1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
  * Hostgroup web2 is only visible/usable on host jump-barfoo
  * Hostgroup db2 is only visible/usable on host jump-barfoo
-   
+
 
 # Missing features
-- [ ] cluster shell mode with "--inscreen" : send STDIN of a master terminal to all screens
-- [ ] packaging for rpm and deb
-- [ ] ...
+
+- cluster shell mode with "--inscreen" : send STDIN of a master terminal to all screens
+- packaging for rpm and deb
+- Show the next node on prompting
+- Manual sorting of nodes
+- Health check cmd for finishing the node
+
 
 # Licence and Authors
 
 Additional authors are very welcome - just submit your patches as pull requests.
 
  * Marc Schoechlin <ms@256bit.org>
- * Marc Schoechlin <marc.schoechlin@dmc.de>
 
 
