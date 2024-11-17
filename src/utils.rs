@@ -8,6 +8,7 @@ use inline_colorization::color_yellow;
 use inline_colorization::color_red;
 use inline_colorization::color_reset;
 use crate::parameters::CommandLineArgs;
+
 /*
 use inline_colorization::color_green;
 use inline_colorization::color_yellow;
@@ -24,6 +25,7 @@ pub enum OutputType {
     Fatal,
 }
 
+// TODO: Replace with a real log framework
 pub fn output(msg: String, level: OutputType) {
     if level == OutputType::Fatal {
         println!("{color_red}{msg}{color_reset}");
@@ -88,6 +90,8 @@ pub fn dump_recipes() {
 }
 
 pub fn get_execution_lines(args: &CommandLineArgs) -> Vec<String> {
+
+    // TODO: use replacement TAG and ask values for them
     let mut raw_execution_lines: Vec<String> = Vec::new();
     if args.command != "" {
         raw_execution_lines.push(format!("{}", args.command));
