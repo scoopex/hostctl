@@ -23,7 +23,7 @@ fn check_screen(args: &CommandLineArgs) -> usize{
         .count()
 }
 
-fn establish_screen(args: &CommandLineArgs){
+fn establish_screen_session(args: &CommandLineArgs){
     for _num in 1..30{
         match check_screen(args){
             0 => {
@@ -35,6 +35,9 @@ fn establish_screen(args: &CommandLineArgs){
                 thread::sleep(Duration::from_secs(1));
             },
             1 => {
+                if _num == 1 {
+                    output(format!("FAILED: There already a screen with the name >>>{}<<<", args.inscreen), OutputType::Fatal)
+                }
                 thread::sleep(Duration::from_secs(1));
                 break;
             },
@@ -74,24 +77,30 @@ fn establish_screen(args: &CommandLineArgs){
 
     output(format!("Base screen established >>>{}<<<", args.inscreen), OutputType::Detail)
 }
-fn establish_base_command(args: &CommandLineArgs, base_executeable: &str, node: &str) -> Command {
+fn establish_base_command(args: &CommandLineArgs, base_executable: &str, node: &str) -> Command {
     let mut cmd;
     static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
     if args.inscreen == "" {
-        return Command::new(base_executeable);
+        return Command::new(base_executable);
     }
 
     if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
-        establish_screen(args);
+        establish_screen_session(args);
     }
 
+    // TODO: Close the window with the title "init"
+    // Command::new("screen")
+    //     .args(["-x", &*args.inscreen, "-m","-X","hardstatus", "string", "%{.rw}%c:%s [%l] %{.bw} %n %t %{.wk} %W %{.wk}"])
+    //     .output()
+    //     .expect("failed to configure base screen");
+
     output(format!("NOTE: command were execute in a screen session, attach by executing 'screen -x {}'", args.inscreen), OutputType::Info);
-    output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sesions)", OutputType::Info);
+    output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sessions)", OutputType::Info);
 
     cmd = Command::new("screen");
     cmd.args(["-x", &*args.inscreen, "-m", "-X", "screen", "-t", node]);
-    cmd.arg(base_executeable);
+    cmd.arg(base_executable);
     cmd
 }
 
@@ -108,7 +117,8 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
 
     cmd.arg(temp_file_path.unwrap().to_string());
 
-    println!("Executing {:?}", cmd);
+    println!("Executing local: {:?}", cmd);
+
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -122,6 +132,31 @@ fn execute_local(node: String, templated_lines: Vec<String>, args: &CommandLineA
     }
     output("\nSUCCESS\n".to_string(), OutputType::Info);
     true
+}
+
+fn send_screen_stdin(screen: String, node: String, line: String, line_nr: usize) -> bool{
+    let the_line = format!("{}^M", line);
+    let cmd_args = ["-S", &*screen,"-p", &*node,"-X", "stuff", the_line.as_str()];
+    //println!("send: {:?}", cmd_args);
+    let result = Command::new("screen")
+        .args( cmd_args)
+        .stderr(Stdio::inherit()) // Print any error messages to the console
+        .output(); // Run the command and capture the output
+
+    match result {
+        Ok(cmd_output) => {
+            if cmd_output.status.success() {
+                true
+            } else {
+                output(format!("FAILED IN LINE  {} : {}\n", line_nr, cmd_output.status), OutputType::Error);
+                false
+            }
+        }
+        Err(e) => {
+            output(format!("FAILED IN LINE {} : {}\n", line_nr, e), OutputType::Error);
+            false
+        }
+    }
 }
 
 fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLineArgs) -> bool {
@@ -143,13 +178,10 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
             cmd.arg(ssh_opt.to_string());
         }
     }
-    cmd.arg(node);
-    cmd.arg("bash");
-    cmd.arg("-s");
+    cmd.arg(node.clone());
+    cmd.arg("bash -s");
 
-    //cmd.arg(temp_file_path.unwrap().to_string());
-
-    println!("Executing {:?}", cmd);
+    println!("Executing remote: {:?}", cmd);
     cmd.stdin(Stdio::piped())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -157,18 +189,28 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
 
     let mut child = cmd.spawn().expect("Unable to start remote connection");
 
-    if let Some(mut stdin) = child.stdin.take() {
-        for line in templated_lines.iter() {
-            writeln!(stdin, "{}\n", line).expect("Failed to write to stdin");
+    if args.inscreen == "" {
+        if let Some(mut stdin) = child.stdin.take() {
+            for line in templated_lines.iter() {
+                writeln!(stdin, "{}\n", line).expect("Failed to write to stdin");
+            }
+        } else {
+            eprintln!("Failed to open stdin");
         }
-    } else {
-        eprintln!("Failed to open stdin");
+    }else{
+        thread::sleep(Duration::from_secs(1));
+        for (nr, line) in templated_lines.iter().enumerate() {
+            let res = send_screen_stdin(args.inscreen.clone(), node.clone(), line.clone(), nr);
+            if !res{
+                false;
+            }
+        }
     }
 
     let status = child.wait().expect("Failed to wait for script");
     if !status.success() {
         output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()), OutputType::Error);
-        return false;
+        false;
     }
     output("\nSUCCESS\n".to_string(), OutputType::Info);
     true

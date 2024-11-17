@@ -110,9 +110,6 @@ pub fn get_execution_lines(args: &CommandLineArgs) -> Vec<String> {
         }
 
     }
-    if args.inscreen != "" {
-        raw_execution_lines.push("read -p 'PRESS ENTER TO EXIT'".to_string());
-    }
     raw_execution_lines
 }
 
