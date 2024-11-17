@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::env;
 use regex::Regex;
 use crate::utils;
 
@@ -8,7 +9,7 @@ pub fn dump_batch_list(items: Vec<String>) {
 }
 
 pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
-    let groups_map = read_configs(items);
+    let groups_map = get_groups_and_nodes(items);
 
     let mut unified_set: HashSet<String> = HashSet::new();
     for (_, nodes) in groups_map.iter() {
@@ -22,7 +23,7 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
 }
 
 pub fn dump_groups(items: Vec<String>, json: bool) {
-    let groups_map = read_configs(items);
+    let groups_map = get_groups_and_nodes(items);
     if json {
         let json_string = serde_json::to_string_pretty(&groups_map).unwrap();
         println!("{}", json_string);
@@ -33,8 +34,13 @@ pub fn dump_groups(items: Vec<String>, json: bool) {
     }
 }
 
-fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
+fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
+
+    let mut groups_map = std::collections::HashMap::new();
     let cfg_files = [
+        format!("{}/hostctl.conf",
+                env::var("HOSTCTL_CONFIG")
+                    .unwrap_or_else(|_| "/not/existing/default/path/to/config".to_string())),
         format!("{}/.hostctl/hostctl.conf", env!("HOME")),
         format!("{}/hostctl.conf", env!("PWD")),
     ];
@@ -46,7 +52,6 @@ fn read_configs(items: Vec<String>) -> HashMap<String, Vec<String>> {
 
     let re = Regex::new(r"^([a-z0-9-]+)\s*:\s*([a-z0-9-,\s]+)(#.*)?").unwrap();
 
-    let mut groups_map = std::collections::HashMap::new();
 
     for cfg_file in &cfg_files {
         if let Ok(lines) = utils::read_lines(cfg_file) {

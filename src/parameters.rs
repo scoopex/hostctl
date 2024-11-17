@@ -37,13 +37,9 @@ use clap::Parser;
     ENVIRONMENT VARIABLES
 
     HOSTCTL_CONFIG
-        Define a alternate configuration location
+        Define a alternate configuration location directory
 
         Default search order: ~/.hostctl/hostctl.conf, <HOSTCTL BINARY DIRECTORY>/hostctl.conf
-
-    HOSTCTL_CONFIG_DYNAMIC_SCRIPT
-        Get additional group definitions by reading stdout of the given
-        script
 
     "###
 )]
