@@ -29,7 +29,7 @@ jobs:
         target/release/hostctl generate-completions zsh > release/hostctl/misc/hostctl_zsh_completion.sh
         target/release/hostctl generate-completions fish > release/hostctl/misc/hostctl_fish_completion.sh
         cd release
-        tar tzvf ../hostctl-v${{ github.ref_name }}.tar.gz
+        tar tzvf ../hostctl-v${{ github.ref_name }}.tar.gz hostctl
     - name: Create release and upload it
       uses: ncipollo/release-action@v1
       if: ${{ inputs.build-type == 'release' }}
