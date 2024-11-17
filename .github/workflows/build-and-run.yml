@@ -1,0 +1,29 @@
+name: Build and Run Project
+
+on:
+  push:
+    branches:
+      - '**' # Run on commits to any branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable # or specify the desired version
+
+      - name: Build project
+        run: cargo build --release
+
+      - name: Create Release files
+        run: |
+          echo "Running additional commands..."
+					target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+					target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+					target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
