@@ -29,11 +29,9 @@ jobs:
         target/release/hostctl generate-completions zsh > release/hostctl/misc/hostctl_zsh_completion.sh
         target/release/hostctl generate-completions fish > release/hostctl/misc/hostctl_fish_completion.sh
         cd release
-        tar -czvf ../hostctl-v${{ github.ref_name }}.tar.gz hostctl
         tar tzvf ../hostctl-v${{ github.ref_name }}.tar.gz
-    - name: Upload tarball as release asset
-      uses: actions/upload-artifact@v4
+    - name: Create release and upload it
+      uses: ncipollo/release-action@v1
       if: ${{ inputs.build-type == 'release' }}
       with:
-        name: release-v${{ github.ref_name }}
-        path: hostctl-v${{ github.ref_name }}.tar.gz
+        artifacts: "hostctl-v${{ github.ref_name }}.tar.gz"
