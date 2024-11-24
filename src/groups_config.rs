@@ -1,7 +1,7 @@
+use crate::utils;
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::env;
-use regex::Regex;
-use crate::utils;
 
 pub fn dump_batch_list(items: Vec<String>) {
     let sorted_vec = unified_node_list(items);
@@ -35,12 +35,13 @@ pub fn dump_groups(items: Vec<String>, json: bool) {
 }
 
 fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
-
     let mut groups_map = std::collections::HashMap::new();
     let cfg_files = [
-        format!("{}/hostctl.conf",
-                env::var("HOSTCTL_CONFIG")
-                    .unwrap_or_else(|_| "/not/existing/default/path/to/config".to_string())),
+        format!(
+            "{}/hostctl.conf",
+            env::var("HOSTCTL_CONFIG")
+                .unwrap_or_else(|_| "/not/existing/default/path/to/config".to_string())
+        ),
         format!("{}/.hostctl/hostctl.conf", env!("HOME")),
         format!("{}/hostctl.conf", env!("PWD")),
     ];
@@ -52,7 +53,6 @@ fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
 
     let re = Regex::new(r"^([a-z0-9-]+)\s*:\s*([a-z0-9-,\s]+)(#.*)?").unwrap();
 
-
     for cfg_file in &cfg_files {
         if let Ok(lines) = utils::read_lines(cfg_file) {
             for line in lines {
@@ -60,10 +60,15 @@ fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
                     if let Some(captures) = re.captures(&*host_line) {
                         let group_name = captures.get(1).map_or("", |m| m.as_str());
                         let members_str = captures.get(2).map_or("", |m| m.as_str());
-                        let nodes = members_str.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                        let nodes = members_str
+                            .split(',')
+                            .map(|s| s.trim().to_string())
+                            .collect::<Vec<_>>();
 
                         if select_all || items.contains(&group_name.to_string()) {
-                            let group = groups_map.entry(group_name.to_string()).or_insert(Vec::new());
+                            let group = groups_map
+                                .entry(group_name.to_string())
+                                .or_insert(Vec::new());
                             group.extend(nodes);
                         }
                     }

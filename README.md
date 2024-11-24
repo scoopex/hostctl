@@ -5,46 +5,72 @@ Convenient management and execution of command on groups of hosts : *A ssh loop 
 I created this tool more than one decade ago, because existing tools suck.
 (Cluster Shell, Bolt, ... and probably because of NIH)
 
-# Install
+# Install and use
 
-Software prerequisites:
- * rustc
- * ssh
- * screen
-
-Install script:
- 
-On Ubuntu just do:
-```
-INSTALLDIR="/opt/"
-sudo apt-get install rustc ssh screen 
-cd ${INSTALLDIR?Installation Dir}
-git clone https://github.com/scoopex/hostctl.git hostctl
-cd hostctl
-cargo build --release
-ln -snf $INSTALLDIR/hostctl/target/release/hostctl /usr/local/bin/hostctl
-target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
-target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
-target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
-echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
-exec bash
-```
-
-Configure your environments:
-
- * Use the "ssh-agent"
- * Activate ssh agent forwarding (openssh: `ForwardAgent yes`) on your desktop  
-   ssh client and all systems you want to use "hostctl"
- * Activate ssh agent-forwarding (openssh: `AllowAgentForwarding yes`, this should be the default value)
-   on your ssh servers 
-
-# Usage
+1. Download ar current release from the [releases page](https://github.com/scoopex/hostctl/releases)
+2. Extract the archive 
+   ```bash
+   cd ${INSTALL_DIR?The installation base directory}
+   tar xvf hostctl-v0.9.11.tar.gz
+   ```
+3. Add the tool to a directory which is in your PATH search-scope
+   ```bash
+   cd ${INSTALL_DIR?The installation base directory}/hostctl
+   ln -snf $PWD/hostctl ~/bin/hostctl
+   ```
+4. Create directories
+   ```
+   mkdir -p ~/.hostctl/repices
+   ```
+5. Configure your environments:
+   (See also "EXAMPLES" section)
+    ```
+    echo << 'EOF'
+    #<groupname> : <host>, <host>, ...
+    web2 :  barfoo-l01-ap01, barfoo-l01-ap02, barfoo-l01-ap03, barfoo-l01-ap04, barfoo-l01-ap05, barfoo-l01-ap06
+    db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
+    EOF 
+    ```
+6. Add shell completion to your shell init
+   (`~/.bashrc`, `~/.zshrc`)
+   ```
+   source ${INSTALL_DIR?The installation base directory}/hostctl_$( basename $SHELL)_completion.sh
+   ```
+6. Configure SSH
+   * Use the "ssh-agent"
+   * Activate ssh agent forwarding (openssh: `ForwardAgent yes`) on your desktop  
+     ssh client and all systems you want to use "hostctl"
+   * Activate ssh agent-forwarding (openssh: `AllowAgentForwarding yes`, this should be the default value)
+     on your ssh servers 
 
 Invoke hostctl to execute commands or scripts on the specified hosts.
 
-See also "EXAMPLES" section.
+# Develop
 
-# Help
+1. Install software prerequisites:
+   ```
+   sudo apt-get install rustc ssh screen 
+   ```
+2. Build it and add it to a directory which is in your PATH search-scope
+   ```
+   cd ${INSTALL_DIR?The installation base directory}/hostctl
+   git clone https://github.com/scoopex/hostctl.git hostctl
+   cd hostctl
+   cargo build --release
+   ln -snf ${INSTALL_DIR?The installation base directory}/hostctl/target/release/hostctl ~/bin/hostctl
+   ```
+3. Build completions
+   ```
+   target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+   target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+   target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
+   echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
+   exec bash
+   ```
+4. Execute step 4 and later in the previous section   
+
+# Help Output
+
 (output of "hostctl --help")
 ```
 $ hostctl --help
@@ -122,28 +148,22 @@ Options:
 
 # Configuration file format (hostctl.conf):
 ```
-#<perl-regex for visibility> : <groupname> : <host>, <host>, ...
-foobar-l01-(ap|db)\d+ : web1 :  foobar-l01-ap01, foobar-l01-ap02, foobar-l01-ap03, foobar-l01-ap04, foobar-l01-ap05, foobar-l01-ap06
-foobar-l01-(ap|db)\d+ : db1 :  foobar-l01-db01, foobar-l01-db02, foobar-l01-db03
-
-jump-barfoo : web2 :  barfoo-l01-ap01, barfoo-l01-ap02, barfoo-l01-ap03, barfoo-l01-ap04, barfoo-l01-ap05, barfoo-l01-ap06
-jump-barfoo : db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
+#<groupname> : <host>, <host>, ...
+web2 :  barfoo-l01-ap01, barfoo-l01-ap02, barfoo-l01-ap03, barfoo-l01-ap04, barfoo-l01-ap05, barfoo-l01-ap06
+db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
 ```
 
- * Hostgroup web1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
- * Hostgroup db1 is only visible/usable on hosts which match to regex "foobar-l01-(ap|db)\d+" - i.e. foobar-l01-ap99
  * Hostgroup web2 is only visible/usable on host jump-barfoo
  * Hostgroup db2 is only visible/usable on host jump-barfoo
 
 
 # Missing features
 
+- Implement completion of hosts and groups
 - cluster shell mode with "--inscreen" : send STDIN of a master terminal to all screens
 - packaging for rpm and deb
-- Show the next node on prompting
 - Manual sorting of nodes
 - Health check cmd for finishing the node
-
 
 # Licence and Authors
 
