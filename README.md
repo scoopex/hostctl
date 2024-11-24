@@ -56,14 +56,14 @@ Invoke hostctl to execute commands or scripts on the specified hosts.
    cd ${INSTALL_DIR?The installation base directory}/hostctl
    git clone https://github.com/scoopex/hostctl.git hostctl
    cd hostctl
-   cargo build --release
-   ln -snf ${INSTALL_DIR?The installation base directory}/hostctl/target/release/hostctl ~/bin/hostctl
+   cargo build
+   ln -snf ${INSTALL_DIR?The installation base directory}/hostctl/target/debug/hostctl ~/bin/hostctl
    ```
 3. Build completions
    ```
-   target/release/hostctl generate-completions bash > misc/hostctl_bash_completion.sh
-   target/release/hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
-   target/release/hostctl generate-completions fish > misc/hostctl_fish_completion.sh
+   hostctl generate-completions bash > misc/hostctl_bash_completion.sh
+   hostctl generate-completions zsh > misc/hostctl_zsh_completion.sh
+   hostctl generate-completions fish > misc/hostctl_fish_completion.sh
    echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
    exec bash
    ```
