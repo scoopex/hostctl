@@ -15,7 +15,6 @@ use crate::utils::{dump_recipes, output_str, OutputType};
 use std::env;
 use std::io;
 
-
 fn shell_completions(){
     if let Some(shell) = env::args().nth(1) {
         if shell == "generate-completions" {
