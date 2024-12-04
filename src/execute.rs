@@ -32,7 +32,7 @@ fn establish_screen_session(args: &CommandLineArgs){
                     .args(["-t", "init", "-S", &*args.inscreen, "-d", "-m", "sleep", "120"])
                     .output()
                     .expect("failed to start base screen");
-                output(format!("Wait for screen session for {} seconds", num), OutputType::Error);
+                output(format!("Wait for screen session for {} seconds", num), OutputType::Info);
                 thread::sleep(Duration::from_secs(1));
             },
             1 => {
@@ -89,8 +89,6 @@ fn establish_base_command(args: &CommandLineArgs, base_executable: &str, node: &
     if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
         establish_screen_session(args);
     }
-    output(format!("NOTE: command were execute in a screen session, attach by executing 'screen -x {}'", args.inscreen), OutputType::Info);
-    output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sessions)", OutputType::Info);
 
     cmd = Command::new("screen");
     cmd.args(["-x", &*args.inscreen, "-m", "-X", "screen", "-t", node]);
@@ -185,7 +183,6 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
     }
 
     output(format!("Execute remote : {:?}", cmd), OutputType::Detail);
-    //output(format!("Execute remote : {:?}", cmd.to_string()), OutputType::Detail);
     if args.term {
         cmd.stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
@@ -344,6 +341,18 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
                 }
             }
         }
+    }
+
+    if args.inscreen != "" {
+        output_str("NOTE: Teardown 'init' screen now", OutputType::Detail);
+        Command::new("screen")
+            .args(["-x", &*args.inscreen,"-p","init", "-X","kill"])
+            .output()
+            .expect("Failed to teadown 'init' screen");
+
+        output(format!("NOTE: command were executed in a screen session, attach to the screen session by executing 'screen -x {}'", args.inscreen), OutputType::Info);
+        output_str("(see 'man screen' or 'STRG + a :help' for getting information about handling screen sessions)", OutputType::Info);
+
     }
 
     failed_nodes.sort();
