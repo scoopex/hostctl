@@ -297,6 +297,7 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
     let number_of_nodes = nodes.len();
     let mut number_of_current = 0;
     let mut failed_nodes: Vec<String> = Vec::new();
+    let mut successful_nodes: Vec<String> = Vec::new();
 
     if nodes.len() == 0 {
         output_str("EXIT: No nodes were specified", OutputType::Fatal);
@@ -318,6 +319,7 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
             match res {
                 NodeResult::Failed => { failed_nodes.push(node.clone());},
                 NodeResult::Quit => {failed_nodes.push(node.clone()); break 'node_loop},
+                NodeResult::Ok => {successful_nodes.push(node.clone());},
                 _ => {}
             }
             if args.wait > 0 {
@@ -361,6 +363,10 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
     if failed_nodes.len() > 0 {
         let failed_nodes_str = failed_nodes.join(", ");
         output(format!("\n\nCOMPLETED  - ONE OR MORE NODES FAILED!\n\nFAILED NODES: {failed_nodes_str}"), OutputType::Error);
+        if successful_nodes.len() > 0{
+            let successful_nodes_str = failed_nodes.join(", ");
+            output(format!("SUCCESSFUL NODES: {successful_nodes_str}"), OutputType::Error);
+        }
     } else {
         output_str("\n\nCOMPLETED - ALL NODES WERE SUCCESSFUL", OutputType::Info);
     }
