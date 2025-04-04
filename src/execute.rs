@@ -213,10 +213,10 @@ fn execute_remote(node: String, templated_lines: Vec<String>, args: &CommandLine
     let status = child.wait().expect("Failed to wait for script");
     if !status.success() {
         output(format!("FAILED, EXITCODE WAS : {}\n", status.code().unwrap()), OutputType::Error);
-        false;
+        return false;
     }
     output("\nSUCCESS\n".to_string(), OutputType::Info);
-    true
+    return true;
 }
 
 #[derive(Debug, PartialEq)]
