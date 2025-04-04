@@ -22,6 +22,13 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
     sorted_vec
 }
 
+pub fn dump_groups_for_completion(){
+    let groups_map = get_groups_and_nodes(vec!["all".to_string()]);
+    for (group_name, _) in groups_map.iter() {
+        println!("{}", group_name);
+    }
+}
+
 pub fn dump_groups(items: Vec<String>, json: bool) {
     let groups_map = get_groups_and_nodes(items);
     if json {

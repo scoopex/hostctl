@@ -19,7 +19,7 @@ _hostctl() {
 
     case "${cmd}" in
         hostctl)
-            opts="-c -e -r -n -s -a -j -d -f -q -b -i -o -l -t -w -p -m -h -V --command --execute-local --recipe --nodes --show --array --json --debug --forcecolor --quiet --batchmode --inscreen --optssh --login --term --wait --prompt --makeselection --log-level --help --version [ITEMS]..."
+            opts="-c -e -r -n -s -a -j -d -f -q -b -i -o -l -t -w -p -m -h -V --command --execute-local --recipe --nodes --show --for-completion --array --json --debug --forcecolor --quiet --batchmode --inscreen --optssh --login --sudo --term --wait --prompt --makeselection --log-level --help --version [ITEM]..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

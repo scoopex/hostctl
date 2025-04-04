@@ -59,7 +59,7 @@ pub struct CommandLineArgs {
     /// Recipes can be stored in $HOME/.hostctl/recipe/ or <hostctl-installation-path>/recipe/ and can
     /// be called by their basename.
     /// Alternatively, recipes can be called be their fully qualified path.
-    #[arg(short, long, default_value = "")]
+    #[arg(short, long, default_value = "", value_hint = clap::ValueHint::AnyPath)]
     pub(crate) recipe: String,
 
     /// Specify hosts instead of groups.
@@ -69,6 +69,10 @@ pub struct CommandLineArgs {
     /// show group(s)
     #[arg(short, long)]
     pub(crate) show: bool,
+
+    /// output for shell completion
+    #[arg(long)]
+    pub(crate) for_completion: bool,
 
     /// Output an array list od nodes
     #[arg(short, long)]
@@ -135,6 +139,6 @@ pub struct CommandLineArgs {
     pub(crate) log_level: String,
 
     /// Groups or nodes for the iteration
-    #[arg()]
+    #[arg(value_name = "ITEM")]
     pub(crate) items: Vec<String>,
 }
