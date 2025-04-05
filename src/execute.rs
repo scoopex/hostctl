@@ -362,10 +362,10 @@ pub fn execute_nodes(nodes: Vec<String>, only_nodes: bool, execute_local: bool, 
 
     if failed_nodes.len() > 0 {
         let failed_nodes_str = failed_nodes.join(", ");
-        output(format!("\n\nCOMPLETED  - ONE OR MORE NODES FAILED!\n\nFAILED NODES: {failed_nodes_str}"), OutputType::Error);
+        output(format!("\n\nCOMPLETED  - ONE OR MORE NODES FAILED!\n\nFAILED NODES: {failed_nodes_str}\n"), OutputType::Error);
         if successful_nodes.len() > 0{
-            let successful_nodes_str = failed_nodes.join(", ");
-            output(format!("SUCCESSFUL NODES: {successful_nodes_str}"), OutputType::Error);
+            let successful_nodes_str = successful_nodes.join(", ");
+            output(format!("SUCCESSFUL NODES: {successful_nodes_str}\n"), OutputType::Info);
         }
     } else {
         output_str("\n\nCOMPLETED - ALL NODES WERE SUCCESSFUL", OutputType::Info);
