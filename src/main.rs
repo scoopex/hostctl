@@ -50,6 +50,12 @@ fn main() {
         Env::default().default_filter_or(cli.log_level.clone())
     ).format_timestamp_secs().init();
 
+    let mut new_items: Vec<String> = Vec::new();
+    for item in cli.items {
+        new_items.push(item.replace(",", ""));
+    }
+    cli.items = new_items;
+
     if cli.show {
         if cli.items.len() == 0 {
             cli.items.push("all".to_string());
