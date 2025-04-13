@@ -24,9 +24,8 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
 
 pub fn dump_groups_for_completion(){
     let groups_map = get_groups_and_nodes(vec!["all".to_string()]);
-    for (group_name, _) in groups_map.iter() {
-        println!("{}", group_name);
-    }
+    let groups: Vec<String> = groups_map.keys().cloned().collect();
+    println!("{}", groups.join(" "));
 }
 
 pub fn dump_groups(items: Vec<String>, json: bool) {

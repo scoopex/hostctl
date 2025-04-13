@@ -8,7 +8,7 @@ use env_logger::Env;
 use clap::Parser;
 use clap::CommandFactory;
 use clap_complete::Generator;
-use crate::groups_config::{dump_batch_list, dump_groups, unified_node_list};
+use crate::groups_config::{dump_batch_list, dump_groups, dump_groups_for_completion, unified_node_list};
 use crate::parameters::CommandLineArgs;
 use crate::utils::{dump_recipes, output_str, OutputType};
 
@@ -23,6 +23,7 @@ fn main() {
     let mut cli = CommandLineArgs::parse();
 
     parameters::shell_completions();
+    // dump_groups_for_completion();
 
     env_logger::Builder::from_env(
         Env::default().default_filter_or(cli.log_level.clone())
