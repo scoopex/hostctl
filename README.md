@@ -160,7 +160,6 @@ db2 :  barfoo-l01-db01, barfoo-l01-db02, barfoo-l01-db03
 # Missing features
 
 - Implement completion of hosts and groups
-- cluster shell mode with "--inscreen" : send STDIN of a master terminal to all screens
 - packaging for rpm and deb
 - Manual sorting of nodes
 - Health check cmd for finishing the node

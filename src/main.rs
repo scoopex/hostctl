@@ -7,32 +7,10 @@ use std::process::exit;
 use env_logger::Env;
 use clap::Parser;
 use clap::CommandFactory;
-use clap_complete::{generate, Generator, Shell};
+use clap_complete::Generator;
 use crate::groups_config::{dump_batch_list, dump_groups, unified_node_list};
 use crate::parameters::CommandLineArgs;
 use crate::utils::{dump_recipes, output_str, OutputType};
-
-use std::env;
-use std::io;
-
-fn shell_completions(){
-    if let Some(shell) = env::args().nth(1) {
-        if shell == "generate-completions" {
-            if let Some(shell_name) = env::args().nth(2) {
-                let shell_enum = shell_name.parse::<Shell>();
-                if let Ok(shell_enum) = shell_enum {
-                    let mut cmd = CommandLineArgs::command();
-                    let bin_name = env!("CARGO_PKG_NAME");
-                    generate(shell_enum, &mut cmd, bin_name, &mut io::stdout());
-                    exit(0);
-                }
-            }
-            eprintln!("Usage: {} generate-completions <shell>", env!("CARGO_PKG_NAME"));
-            exit(1);
-        }
-    }
-}
-
 
 fn main() {
     unsafe { libc::umask(0o077) };
@@ -44,7 +22,7 @@ fn main() {
 
     let mut cli = CommandLineArgs::parse();
 
-    shell_completions();
+    parameters::shell_completions();
 
     env_logger::Builder::from_env(
         Env::default().default_filter_or(cli.log_level.clone())

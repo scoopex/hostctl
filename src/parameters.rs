@@ -1,4 +1,7 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use std::{env, io};
+use clap_complete::{generate, Shell};
+use std::process::exit;
 
 #[derive(Parser, Debug)]
 #[command(author, version,
@@ -107,17 +110,17 @@ pub struct CommandLineArgs {
     #[arg(short, long, default_value = "")]
     pub(crate) optssh: String,
 
-    // login to each host
-    // (sleep 1 second after every login, use STRG+c to terminate iteration)
+    /// login to each host
+    /// (sleep 1 second after every login, use STRG+c to terminate iteration)
     #[arg(short, long)]
     pub(crate) login: bool,
 
-    // use sudo to gather root privileges
+    /// use sudo to gather root privileges
     #[arg(long)]
     pub(crate) sudo: bool,
 
-    // Force pseudo-tty allocation
-    // (typically needed for tools which use (ncurses-)text-menus)
+    /// Force pseudo-tty allocation
+    /// (typically needed for tools which use (ncurses-)text-menus)
     #[arg(short, long)]
     pub(crate) term: bool,
 
@@ -134,6 +137,10 @@ pub struct CommandLineArgs {
     #[arg(short, long)]
     pub(crate) makeselection: bool,
 
+    /// accept all ssh known hosts keys
+    #[arg(short, long)]
+    pub(crate) knownhostsaccept: bool,
+
     /// The log level
     #[arg(long, default_value = "info")]
     pub(crate) log_level: String,
@@ -141,4 +148,22 @@ pub struct CommandLineArgs {
     /// Groups or nodes for the iteration
     #[arg(value_name = "ITEM")]
     pub(crate) items: Vec<String>,
+}
+
+pub fn shell_completions(){
+    if let Some(shell) = env::args().nth(1) {
+        if shell == "generate-completions" {
+            if let Some(shell_name) = env::args().nth(2) {
+                let shell_enum = shell_name.parse::<Shell>();
+                if let Ok(shell_enum) = shell_enum {
+                    let mut cmd = CommandLineArgs::command();
+                    let bin_name = env!("CARGO_PKG_NAME");
+                    generate(shell_enum, &mut cmd, bin_name, &mut io::stdout());
+                    exit(0);
+                }
+            }
+            eprintln!("Usage: {} generate-completions <shell>", env!("CARGO_PKG_NAME"));
+            exit(1);
+        }
+    }
 }

@@ -83,7 +83,11 @@ fn establish_base_command(args: &CommandLineArgs, base_executable: &str, node: &
     static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
     if args.inscreen == "" {
-        return Command::new(base_executable);
+        let mut cmd = Command::new(base_executable);
+        if args.knownhostsaccept {
+            cmd.args(["-o", "StrictHostKeyChecking=accept-new"]);
+        }
+        return cmd;
     }
 
     if COUNTER.fetch_add(1, Ordering::Relaxed) == 0 {
