@@ -87,6 +87,7 @@ fn establish_base_command(args: &CommandLineArgs, base_executable: &str, node: &
         if args.knownhostsaccept {
             cmd.args(["-o", "StrictHostKeyChecking=accept-new"]);
         }
+        cmd.args(["-o", &format!("ConnectTimeout={}", args.timeoutssh)]);
         return cmd;
     }
 
