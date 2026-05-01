@@ -57,7 +57,7 @@ fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
         select_all = true;
     }
 
-    let re = Regex::new(r"^([a-z0-9-]+)\s*:\s*([a-z0-9-,\s]+)(#.*)?").unwrap();
+    let re = Regex::new(r"^([a-z0-9-\.]+)\s*:\s*([a-z0-9-\.,%\s]+)(#.*)?").unwrap();
 
     for cfg_file in &cfg_files {
         if let Ok(lines) = utils::read_lines(cfg_file) {

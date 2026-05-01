@@ -311,6 +311,7 @@ dependencies = [
  "inline_colorization",
  "inquire",
  "libc",
+ "log",
  "regex",
  "serde_json",
  "tempfile",
