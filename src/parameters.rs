@@ -44,6 +44,15 @@ use std::process::exit;
 
         Default search order: ~/.hostctl/hostctl.conf, <HOSTCTL BINARY DIRECTORY>/hostctl.conf
 
+        The format of this file looks like this:
+
+        # <Goupname>: <Host>, <Host>, %<Group>, ...
+        private: vim.org, 256bit.org, blinky, vim.linetics.de
+        private-test: 213.95.54.132
+        # Combine the hosts of both of the previous groups
+        private-all: %private-test, %private
+
+
     "###
 )]
 pub struct CommandLineArgs {

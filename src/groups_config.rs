@@ -22,7 +22,7 @@ pub fn unified_node_list(items: Vec<String>) -> Vec<String> {
     sorted_vec
 }
 
-pub fn dump_groups_for_completion(){
+pub fn dump_groups_for_completion() {
     let groups_map = get_groups_and_nodes(vec!["all".to_string()]);
     let groups: Vec<String> = groups_map.keys().cloned().collect();
     println!("{}", groups.join(" "));
@@ -57,7 +57,7 @@ fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
         select_all = true;
     }
 
-    let re = Regex::new(r"^([a-z0-9-\.]+)\s*:\s*([a-z0-9-\.,%\s]+)(#.*)?").unwrap();
+    let re = Regex::new(r"^([a-z0-9-.]+)\s*:\s*([a-z0-9-.,%\s]+)(#.*)?").unwrap();
 
     for cfg_file in &cfg_files {
         if let Ok(lines) = utils::read_lines(cfg_file) {
@@ -82,5 +82,26 @@ fn get_groups_and_nodes(items: Vec<String>) -> HashMap<String, Vec<String>> {
             }
         }
     }
-    groups_map
+    resolve_aliases_from_map(&mut groups_map)
+}
+
+fn resolve_aliases_from_map(groups_map: &mut HashMap<String, Vec<String>>) -> HashMap<String, Vec<String>> {
+    let mut groups_map_resolved = std::collections::HashMap::new();
+    for (group_name, unresolved_items) in groups_map.iter() {
+        let mut nodes_final = Vec::new();
+        for unresolved_item in unresolved_items {
+            if unresolved_item.starts_with("%") {
+                let group_alias = unresolved_item.strip_prefix('%').unwrap();
+                let nodes_resolved = groups_map.get(group_alias).unwrap();
+                nodes_final.append(&mut nodes_resolved.clone());
+            } else {
+                nodes_final.push(unresolved_item.clone());
+            }
+        }
+        let group = groups_map_resolved
+            .entry(group_name.to_string())
+            .or_insert(Vec::new());
+        group.extend(nodes_final);
+    }
+    groups_map_resolved
 }
