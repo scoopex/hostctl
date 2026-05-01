@@ -128,6 +128,11 @@ pub struct CommandLineArgs {
     #[arg(short, long, default_value = "0")]
     pub(crate) wait: u64,
 
+    /// timeout for invoking ssh connections
+    #[arg(long, default_value = "3")]
+    pub(crate) timeoutssh: u8,
+
+
     /// ask after every execution, if hostctl should continue, retry, execute a shell or quit
     #[arg(short, long)]
     pub(crate) prompt: bool,
