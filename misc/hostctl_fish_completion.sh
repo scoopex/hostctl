@@ -3,6 +3,7 @@ complete -c hostctl -s r -l recipe -d 'Recipe to execute. A recipe is a shellscr
 complete -c hostctl -s i -l inscreen -d 'start command/script screen session' -r
 complete -c hostctl -s o -l optssh -d 'Add the arguments to the ssh command' -r
 complete -c hostctl -s w -l wait -d 'wait a specified number of seconds before continuing at next host' -r
+complete -c hostctl -l timeoutssh -d 'timeout for invoking ssh connections' -r
 complete -c hostctl -l log-level -d 'The log level' -r
 complete -c hostctl -s e -l execute-local -d 'Execute as local command and add hostname to the command (Hostname will be appended to the command, or inserted where \'HOST\' string is located in the string'
 complete -c hostctl -s n -l nodes -d 'Specify hosts instead of groups'

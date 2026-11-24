@@ -53,11 +53,11 @@ Invoke hostctl to execute commands or scripts on the specified hosts.
    ```
 2. Build it and add it to a directory which is in your PATH search-scope
    ```
-   cd ${INSTALL_DIR?The installation base directory}/hostctl
-   git clone https://github.com/scoopex/hostctl.git hostctl
-   cd hostctl
+   INSTALL_DIR="$PWD/hostctl"
+   git clone https://github.com/scoopex/hostctl.git ${INSTALL_DIR?}
+   cd ${INSTALL_DIR?}
    cargo build
-   ln -snf ${INSTALL_DIR?The installation base directory}/hostctl/target/debug/hostctl ~/bin/hostctl
+   ln -snf ${INSTALL_DIR?The installation base directory}/target/debug/hostctl ~/bin/hostctl
    ```
 3. Build completions
    ```
@@ -67,7 +67,7 @@ Invoke hostctl to execute commands or scripts on the specified hosts.
    echo "source $INSTALLDIR/hostctl/misc/hostctl_bash_completion.sh" >> .bashrc
    exec bash
    ```
-4. Execute step 4 and later in the previous section   
+4. Perform step 4 and later in the previous section
 
 # Help Output
 

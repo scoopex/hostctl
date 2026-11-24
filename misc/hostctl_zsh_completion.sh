@@ -25,6 +25,7 @@ _hostctl() {
 '--optssh=[Add the arguments to the ssh command]:OPTSSH:_default' \
 '-w+[wait a specified number of seconds before continuing at next host]:WAIT:_default' \
 '--wait=[wait a specified number of seconds before continuing at next host]:WAIT:_default' \
+'--timeoutssh=[timeout for invoking ssh connections]:TIMEOUTSSH:_default' \
 '--log-level=[The log level]:LOG_LEVEL:_default' \
 '-e[Execute as local command and add hostname to the command (Hostname will be appended to the command, or inserted where '\''HOST'\'' string is located in the string]' \
 '--execute-local[Execute as local command and add hostname to the command (Hostname will be appended to the command, or inserted where '\''HOST'\'' string is located in the string]' \
